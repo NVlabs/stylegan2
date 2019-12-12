@@ -16,6 +16,7 @@ import six.moves.queue as Queue # pylint: disable=import-error
 import traceback
 import numpy as np
 import tensorflow as tf
+from tqdm import tqdm
 import PIL.Image
 import dnnlib.tflib as tflib
 
@@ -515,10 +516,14 @@ def create_from_images(tfrecord_dir, image_dir, shuffle):
     if channels not in [1, 3]:
         error('Input images must be stored as RGB or grayscale')
 
-    with TFRecordExporter(tfrecord_dir, len(image_filenames)) as tfr:
+    with TFRecordExporter(tfrecord_dir, len(image_filenames), print_progress=False) as tfr:
         order = tfr.choose_shuffled_order() if shuffle else np.arange(len(image_filenames))
-        for idx in range(order.size):
-            img = np.asarray(PIL.Image.open(image_filenames[order[idx]]))
+        for idx in tqdm(range(order.size)):
+            im = PIL.Image.open(image_filenames[order[idx]])
+            img = np.asarray(im)
+            if img.ndim != 3:
+                im = im.convert("RGB")
+                img = np.asarray(im)
             if channels == 1:
                 img = img[np.newaxis, :, :] # HW => CHW
             else:

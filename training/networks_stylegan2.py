@@ -89,7 +89,10 @@ def naive_downsample_2d(x, factor=2):
 def modulated_conv2d_layer(x, y, fmaps, kernel, up=False, down=False, demodulate=True, resample_kernel=None, gain=1, use_wscale=True, lrmul=1, fused_modconv=True, weight_var='weight', mod_weight_var='mod_weight', mod_bias_var='mod_bias'):
     assert not (up and down)
     assert kernel >= 1 and kernel % 2 == 1
-
+    if x.dtype == tf.float16:
+        epsilon = 1e-4
+    else:
+        epsilon = 1e-8
     # Get weight.
     w = get_weight([kernel, kernel, x.shape[1].value, fmaps], gain=gain, use_wscale=use_wscale, lrmul=lrmul, weight_var=weight_var)
     ww = w[np.newaxis] # [BkkIO] Introduce minibatch dimension.
@@ -101,7 +104,7 @@ def modulated_conv2d_layer(x, y, fmaps, kernel, up=False, down=False, demodulate
 
     # Demodulate.
     if demodulate:
-        d = tf.rsqrt(tf.reduce_sum(tf.square(ww), axis=[1,2,3]) + 1e-8) # [BO] Scaling factor.
+        d = tf.rsqrt(tf.reduce_sum(tf.square(ww), axis=[1,2,3]) + epsilon) # [BO] Scaling factor.
         ww *= d[:, np.newaxis, np.newaxis, np.newaxis, :] # [BkkIO] Scale output feature maps.
 
     # Reshape/scale input.
@@ -260,7 +263,7 @@ def G_mapping(
     mapping_lrmul           = 0.01,         # Learning rate multiplier for the mapping layers.
     mapping_nonlinearity    = 'lrelu',      # Activation function: 'relu', 'lrelu', etc.
     normalize_latents       = True,         # Normalize latent vectors (Z) before feeding them to the mapping layers?
-    dtype                   = 'float32',    # Data type to use for activations and outputs.
+    dtype                   = 'float16',    # Data type to use for activations and outputs.
     **_kwargs):                             # Ignore unrecognized keyword args.
 
     act = mapping_nonlinearity
@@ -271,7 +274,10 @@ def G_mapping(
     latents_in = tf.cast(latents_in, dtype)
     labels_in = tf.cast(labels_in, dtype)
     x = latents_in
-
+    if dtype == 'float16':
+        epsilon = 1e-4
+    else:
+        epsilon = 1e-8
     # Embed labels and concatenate them with latents.
     if label_size:
         with tf.variable_scope('LabelConcat'):
@@ -282,7 +288,7 @@ def G_mapping(
     # Normalize latents.
     if normalize_latents:
         with tf.variable_scope('Normalize'):
-            x *= tf.rsqrt(tf.reduce_mean(tf.square(x), axis=1, keepdims=True) + 1e-8)
+            x *= tf.rsqrt(tf.reduce_mean(tf.square(x), axis=1, keepdims=True) + epsilon)
 
     # Mapping layers.
     for layer_idx in range(mapping_layers):
@@ -315,7 +321,7 @@ def G_synthesis_stylegan_revised(
     fmap_max            = 512,          # Maximum number of feature maps in any layer.
     randomize_noise     = True,         # True = randomize noise inputs every time (non-deterministic), False = read noise inputs from variables.
     nonlinearity        = 'lrelu',      # Activation function: 'relu', 'lrelu', etc.
-    dtype               = 'float32',    # Data type to use for activations and outputs.
+    dtype               = 'float16',    # Data type to use for activations and outputs.
     resample_kernel     = [1,3,3,1],    # Low-pass filter to apply when resampling activations. None = no filtering.
     fused_modconv       = True,         # Implement modulated_conv2d_layer() as a single fused op?
     structure           = 'auto',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
@@ -426,7 +432,7 @@ def G_synthesis_stylegan2(
     randomize_noise     = True,         # True = randomize noise inputs every time (non-deterministic), False = read noise inputs from variables.
     architecture        = 'skip',       # Architecture: 'orig', 'skip', 'resnet'.
     nonlinearity        = 'lrelu',      # Activation function: 'relu', 'lrelu', etc.
-    dtype               = 'float32',    # Data type to use for activations and outputs.
+    dtype               = 'float16',    # Data type to use for activations and outputs.
     resample_kernel     = [1,3,3,1],    # Low-pass filter to apply when resampling activations. None = no filtering.
     fused_modconv       = True,         # Implement modulated_conv2d_layer() as a single fused op?
     **_kwargs):                         # Ignore unrecognized keyword args.
@@ -522,7 +528,7 @@ def D_stylegan(
     nonlinearity        = 'lrelu',      # Activation function: 'relu', 'lrelu', etc.
     mbstd_group_size    = 4,            # Group size for the minibatch standard deviation layer, 0 = disable.
     mbstd_num_features  = 1,            # Number of features for the minibatch standard deviation layer.
-    dtype               = 'float32',    # Data type to use for activations and outputs.
+    dtype               = 'float16',    # Data type to use for activations and outputs.
     resample_kernel     = [1,3,3,1],    # Low-pass filter to apply when resampling activations. None = no filtering.
     structure           = 'auto',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
     is_template_graph   = False,        # True = template graph constructed by the Network class, False = actual evaluation.
@@ -624,7 +630,7 @@ def D_stylegan2(
     nonlinearity        = 'lrelu',      # Activation function: 'relu', 'lrelu', etc.
     mbstd_group_size    = 4,            # Group size for the minibatch standard deviation layer, 0 = disable.
     mbstd_num_features  = 1,            # Number of features for the minibatch standard deviation layer.
-    dtype               = 'float32',    # Data type to use for activations and outputs.
+    dtype               = 'float16',    # Data type to use for activations and outputs.
     resample_kernel     = [1,3,3,1],    # Low-pass filter to apply when resampling activations. None = no filtering.
     **_kwargs):                         # Ignore unrecognized keyword args.
 

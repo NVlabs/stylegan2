@@ -43,7 +43,7 @@ class Optimizer:
         learning_rate:          TfExpressionEx  = 0.001,                    # Learning rate. Can vary over time.
         minibatch_multiplier:   TfExpressionEx  = None,                     # Treat N consecutive minibatches as one by accumulating gradients.
         share:                  "Optimizer"     = None,                     # Share internal state with a previously created optimizer?
-        use_loss_scaling:       bool            = False,                    # Enable dynamic loss scaling for robust mixed-precision training?
+        use_loss_scaling:       bool            = True,                    # Enable dynamic loss scaling for robust mixed-precision training?
         loss_scaling_init:      float           = 64.0,                     # Log2 of initial loss scaling factor.
         loss_scaling_inc:       float           = 0.0005,                   # Log2 of per-minibatch loss scaling increment when there is no overflow.
         loss_scaling_dec:       float           = 1.0,                      # Log2 of per-minibatch loss scaling decrement when there is an overflow.

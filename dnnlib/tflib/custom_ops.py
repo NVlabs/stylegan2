@@ -27,6 +27,7 @@ verbose = True # Print status messages to stdout.
 compiler_bindir_search_path = [
     'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64',
     'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.23.28105/bin/Hostx64/x64',
+    'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64',
     'C:/Program Files (x86)/Microsoft Visual Studio 14.0/vc/bin',
 ]
 
@@ -61,12 +62,15 @@ def _run_cmd(cmd):
         raise RuntimeError('NVCC returned an error. See below for full command line and output log:\n\n%s\n\n%s' % (cmd, output))
 
 def _prepare_nvcc_cli(opts):
+    tf_include = tf.sysconfig.get_include()#.replace('\\lib\\site', '\\Lib\\site')
     cmd = 'nvcc ' + opts.strip()
     cmd += ' --disable-warnings'
-    cmd += ' --include-path "%s"' % tf.sysconfig.get_include()
-    cmd += ' --include-path "%s"' % os.path.join(tf.sysconfig.get_include(), 'external', 'protobuf_archive', 'src')
-    cmd += ' --include-path "%s"' % os.path.join(tf.sysconfig.get_include(), 'external', 'com_google_absl')
-    cmd += ' --include-path "%s"' % os.path.join(tf.sysconfig.get_include(), 'external', 'eigen_archive')
+    cmd += ' --include-path "%s"' % tf_include
+    cmd += ' --include-path "%s"' % os.path.join(tf_include, 'tensorflow_core')
+    cmd += ' --include-path "%s"' % os.path.join(tf_include, 'tensorflow_core', 'core', 'framework')
+    cmd += ' --include-path "%s"' % os.path.join(tf_include, 'external', 'protobuf_archive', 'src')
+    cmd += ' --include-path "%s"' % os.path.join(tf_include, 'external', 'com_google_absl')
+    cmd += ' --include-path "%s"' % os.path.join(tf_include, 'external', 'eigen_archive')
 
     compiler_bindir = _find_compiler_bindir()
     if compiler_bindir is None:
@@ -77,6 +81,7 @@ def _prepare_nvcc_cli(opts):
     else:
         cmd += ' --compiler-bindir "%s"' % compiler_bindir
     cmd += ' 2>&1'
+    #print(cmd)
     return cmd
 
 #----------------------------------------------------------------------------

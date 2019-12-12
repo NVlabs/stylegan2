@@ -165,13 +165,14 @@ def G_logistic_ns_pathreg(G, D, opt, training_set, minibatch_size, pl_minibatch_
 
         # Compute |J*y|.
         pl_noise = tf.random_normal(tf.shape(fake_images_out)) / np.sqrt(np.prod(G.output_shape[2:]))
-        pl_grads = tf.gradients(tf.reduce_sum(fake_images_out * pl_noise), [fake_dlatents_out])[0]
+        pl_grads = tf.gradients(tf.reduce_sum(tf.cast(fake_images_out,tf.float32) * pl_noise), [tf.cast(fake_dlatents_out, tf.float32)])[0]
         pl_lengths = tf.sqrt(tf.reduce_mean(tf.reduce_sum(tf.square(pl_grads), axis=2), axis=1))
+        pl_lengths = tf.cast(pl_lengths, tf.float16)
         pl_lengths = autosummary('Loss/pl_lengths', pl_lengths)
 
         # Track exponential moving average of |J*y|.
         with tf.control_dependencies(None):
-            pl_mean_var = tf.Variable(name='pl_mean', trainable=False, initial_value=0.0, dtype=tf.float32)
+            pl_mean_var = tf.Variable(name='pl_mean', trainable=False, initial_value=0.0, dtype=pl_lengths.dtype)
         pl_mean = pl_mean_var + pl_decay * (tf.reduce_mean(pl_lengths) - pl_mean_var)
         pl_update = tf.assign(pl_mean_var, pl_mean)
 
