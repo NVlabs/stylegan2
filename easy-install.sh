@@ -4,12 +4,12 @@ pip install --user -r requirements.txt
 
 mkdir pkl
 cd pkl
-gdown https://drive.google.com/uc?1JLqXE5bGZnlu2BkbLPD5_ZxoO3Nz-AvF #inception: https://drive.google.com/open?id=1JLqXE5bGZnlu2BkbLPD5_ZxoO3Nz-AvF
+gdown --id 1JLqXE5bGZnlu2BkbLPD5_ZxoO3Nz-AvF #inception: https://drive.google.com/open?id=1JLqXE5bGZnlu2BkbLPD5_ZxoO3Nz-AvF
 cd ../
 
 mkdir networks
 cd networks
-gdown https://drive.google.com/uc?1UlDmJVLLnBD9SnLSMXeiZRO6g-OMQCA_
+gdown --id 1UlDmJVLLnBD9SnLSMXeiZRO6g-OMQCA_
 cd ../
 
 mkdir datasets
