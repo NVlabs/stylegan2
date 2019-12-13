@@ -43,10 +43,8 @@ StyleGAN2 relies on custom TensorFlow ops that are compiled on the fly using [NV
 
 ```.bash
 nvcc test_nvcc.cu -o test_nvcc -run
-| test_nvcc.cu
-|    Creating library test_nvcc.lib and object test_nvcc.exp
-| CPU says hello!
-| GPU says hello!
+| CPU says hello.
+| GPU says hello.
 ```
 
 On Windows, the compilation requires Microsoft Visual Studio to be in `PATH`. We recommend installing [Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/) and adding into `PATH` using `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"`.
@@ -183,7 +181,7 @@ python run_metrics.py --data-dir=~/datasets --network=gdrive:networks/stylegan2-
 
 For other configurations, see the [StyleGAN2 Google Drive folder](https://drive.google.com/open?id=1QHc-yF5C3DChRwSdZKcx1w6K8JvSxQi7).
 
-Note the metrics are evaluated using a different random seed each time, so the results will vary between runs. In the paper, we reported the average result of running each metric 10 times. The following table lists the available metrics along with their expected runtimes and random variation:
+Note that the metrics are evaluated using a different random seed each time, so the results will vary between runs. In the paper, we reported the average result of running each metric 10 times. The following table lists the available metrics along with their expected runtimes and random variation:
 
 | Metric      | FFHQ config F  | 1 GPU  | 2 GPUs  | 4 GPUs | Description |
 | :---------- | :------------: | :----: | :-----: | :----: | :---------- |
