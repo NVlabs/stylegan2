@@ -1,3 +1,10 @@
+## INSTALL
+```
+git clone https://github.com/dvschultz/stylegan2
+cd stylegan2
+bash ./easy-install.sh
+```
+
 ## StyleGAN2 &mdash; Official TensorFlow Implementation
 
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)
