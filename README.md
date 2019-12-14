@@ -1,5 +1,28 @@
-## StyleGAN2 &mdash; Official TensorFlow Implementation
+## StyleGAN2 &mdash; Encoder for Official TensorFlow Implementation
+![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg?style=plastic)
+![TensorFlow 1.10](https://img.shields.io/badge/tensorflow-1.10-green.svg?style=plastic)
+![cuDNN 7.3.1](https://img.shields.io/badge/cudnn-7.3.1-green.svg?style=plastic)
+![License CC BY-NC](https://img.shields.io/badge/license-CC_BY--NC-green.svg?style=plastic)
 
+This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-encoder) for [NVlabs/stylegan2](https://github.com/NVlabs/stylegan2).
+
+![Teaser image](./docs/stylegan2encoder-teaser-1024x256.png)
+
+### Generating latent representation of your images
+> pip install tensorflow-gpu==1.14
+
+> git clone https://github.com/rolux/stylegan2encoder.git
+
+> cd /content/stylegan2encoder
+
+You can generate latent representations of your own images using two scripts:
+1) Extract and align faces from images
+> python align_images.py raw_images/ aligned_images/
+
+2) Find latent representation of aligned images
+> python encode_images.py aligned_images/ generated_images/ latent_representations/ path_to_network.pkl
+
+### Original Readme
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)
 
 **Analyzing and Improving the Image Quality of StyleGAN**<br>
