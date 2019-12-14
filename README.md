@@ -9,18 +9,20 @@ This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-enc
 ![Teaser image](./docs/stylegan2encoder-teaser-1024x256.png)
 
 ### Generating latent representation of your images
-> pip install tensorflow-gpu==1.14
+`pip install tensorflow-gpu==1.14`
 
-> git clone https://github.com/rolux/stylegan2encoder.git
+`git clone https://github.com/rolux/stylegan2encoder.git`
 
-> cd /content/stylegan2encoder
+`cd stylegan2encoder`
 
 You can generate latent representations of your own images using two scripts:
 1) Extract and align faces from images
-> python align_images.py raw_images/ aligned_images/
+
+`python align_images.py raw_images/ aligned_images/`
 
 2) Find latent representation of aligned images
-> python encode_images.py aligned_images/ generated_images/ latent_representations/ path_to_network.pkl
+
+`python encode_images.py aligned_images/ generated_images/ latent_representations/ path_to_network.pkl`
 
 ### Original Readme
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)
