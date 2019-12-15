@@ -4,6 +4,7 @@ git clone https://github.com/dvschultz/stylegan2
 cd stylegan2
 bash ./easy-install.sh
 ```
+This repo adds an easy install script to install dependencies and install pkl files that might hit rate limits from the original repo. It also includes some new image generation functions.
 
 ## StyleGAN2 &mdash; Official TensorFlow Implementation
 
@@ -111,6 +112,10 @@ python run_generator.py generate-images --network=gdrive:networks/stylegan2-car-
 # Example of style mixing (matches the corresponding video clip)
 python run_generator.py style-mixing-example --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
   --row-seeds=85,100,75,458,1500 --col-seeds=55,821,1789,293 --truncation-psi=1.0
+
+  # See truncation values from 0.1 to 2.0 on a single seed
+python run_generator.py truncation-traversal --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
+  --seed=66
 ```
 
 The results are placed in `results/<RUNNING_ID>/*.png`. You can change the location with `--result-dir`. For example, `--result-dir=~/my-stylegan2-results`.
