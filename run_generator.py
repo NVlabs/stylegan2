@@ -14,6 +14,35 @@ import sys
 
 import pretrained_networks
 
+
+def truncation_traversal(network_pkl, seed):
+    print('Loading networks from "%s"...' % network_pkl)
+    _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
+    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+
+    count = 1
+    trunc = 0.1
+    increment = 0.01
+
+    while trunc < 2.01:
+        Gs_kwargs.truncation_psi = trunc
+        print('Generating truncation %0.2f' % trunc)
+
+        rnd = np.random.RandomState(seed)
+        z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+        tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+        images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]        
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % count))
+
+        trunc+=increment
+        count+=1
+
+
+
 #----------------------------------------------------------------------------
 
 def generate_images(network_pkl, seeds, truncation_psi):
@@ -127,6 +156,11 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
 
     subparsers = parser.add_subparsers(help='Sub-commands', dest='command')
 
+    parser_truncation_traversal = subparsers.add_parser('truncation-traversal', help='Generate images')
+    parser_truncation_traversal.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
+    parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='List of random seeds', required=True)
+    parser_truncation_traversal.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
+
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
     parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
@@ -157,6 +191,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     sc.run_desc = subcmd
 
     func_name_map = {
+        'truncation-traversal': 'run_generator.truncation_traversal',
         'generate-images': 'run_generator.generate_images',
         'style-mixing-example': 'run_generator.style_mixing_example'
     }
