@@ -160,8 +160,8 @@ def generate_latent_images(zs, truncation_psi):
 
 def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
     print('Loading networks from "%s"...' % network_pkl)
-    _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
-    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+    global _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
+    global noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
 
     if walk_type is 'line':
         zs = generate_zs_from_seeds(seeds,Gs)
