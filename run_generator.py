@@ -15,7 +15,7 @@ import sys
 import pretrained_networks
 
 # from https://colab.research.google.com/drive/1ShgW6wohEFQtqs_znMna3dzrcVoABKIH
-def generate_zs_from_seeds(seeds):
+def generate_zs_from_seeds(seeds,Gs):
     zs = []
     for seed_idx, seed in enumerate(seeds):
         rnd = np.random.RandomState(seed)
@@ -87,30 +87,48 @@ def generate_images(network_pkl, seeds, truncation_psi):
 
 #----------------------------------------------------------------------------
 
+def generate_latent_images(zs, truncation_psi):
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    if not isinstance(truncation_psi, list):
+        truncation_psi = [truncation_psi] * len(zs)
+        
+    imgs = []
+    for z_idx, z in log_progress(enumerate(zs), size = len(zs), name = "Generating images"):
+        Gs_kwargs.truncation_psi = truncation_psi[z_idx]
+        noise_rnd = np.random.RandomState(1) # fix noise
+        tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+        images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+        imgs.append(PIL.Image.fromarray(images[0], 'RGB'))
+    return imgs
+
 def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
 
-    Gs_kwargs = dnnlib.EasyDict()
-    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
-    Gs_kwargs.randomize_noise = False
-    if truncation_psi is not None:
-        Gs_kwargs.truncation_psi = truncation_psi
-
     if walk_type is 'line':
-        rnd = np.random.RandomState(seeds[0])
-        z1 = rnd.randn(1, *Gs.input_shape[1:])
-        rnd = np.random.RandomState(seeds[1])
-        z2 = rnd.randn(1, *Gs.input_shape[1:])
-        step = (z1-z2)/frames
+        zs = generate_zs_from_seeds(seeds,Gs)
 
-        for frame_idx in range(0,frames):
-            z = z1+(step*frame_idx)
-            noise_rnd = np.random.RandomState(1) # fix noise
-            tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
-            images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % frame_idx))
+        latent1 = zs[0]
+        latent2 = zs[1]
+
+        number_of_steps = frames
+        generate_latent_images(interpolate([latent1,latent2],number_of_steps), truncation_psi)
+        # rnd = np.random.RandomState(seeds[0])
+        # z1 = rnd.randn(1, *Gs.input_shape[1:])
+        # rnd = np.random.RandomState(seeds[1])
+        # z2 = rnd.randn(1, *Gs.input_shape[1:])
+        # step = (z1-z2)/frames
+        # print(step)
+
+        # for frame_idx in range(0,frames):
+        #     z = z1+(step*frame_idx)
+        #     noise_rnd = np.random.RandomState(1) # fix noise
+        #     tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
+        #     images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+        #     PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % frame_idx))
 
 
 
