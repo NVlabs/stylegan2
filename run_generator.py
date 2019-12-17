@@ -30,8 +30,8 @@ def interpolate(zs, steps):
    out = []
    for i in range(len(zs)-1):
     for index in range(steps):
-     fraction = index/float(steps) 
-     out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
+        fraction = index/float(steps-1)
+        out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
    return out
 
 def truncation_traversal(network_pkl, seed):
@@ -95,6 +95,7 @@ def generate_latent_images(zs, truncation_psi):
         
     imgs = []
     for z_idx, z in enumerate(zs):
+        print('Generating image for step %d/%d ...' % (z_idx, len(zs)))
         Gs_kwargs.truncation_psi = truncation_psi[z_idx]
         noise_rnd = np.random.RandomState(1) # fix noise
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
@@ -115,21 +116,6 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
 
         number_of_steps = frames
         generate_latent_images(interpolate([latent1,latent2],number_of_steps), truncation_psi)
-        # rnd = np.random.RandomState(seeds[0])
-        # z1 = rnd.randn(1, *Gs.input_shape[1:])
-        # rnd = np.random.RandomState(seeds[1])
-        # z2 = rnd.randn(1, *Gs.input_shape[1:])
-        # step = (z1-z2)/frames
-        # print(step)
-
-        # for frame_idx in range(0,frames):
-        #     z = z1+(step*frame_idx)
-        #     noise_rnd = np.random.RandomState(1) # fix noise
-        #     tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
-        #     images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        #     PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % frame_idx))
-
-
 
 #----------------------------------------------------------------------------
 
