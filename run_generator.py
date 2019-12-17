@@ -111,7 +111,7 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
     if walk_type is 'line':
         zs = generate_zs_from_seeds(seeds,Gs)
 
-        number_of_steps = int(frames/(len(zs)-1))
+        number_of_steps = int(frames/(len(zs)-1))+1
         generate_latent_images(interpolate(zs,number_of_steps), truncation_psi)
 
 #----------------------------------------------------------------------------
