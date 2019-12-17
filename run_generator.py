@@ -105,7 +105,7 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
         z2 = rnd.randn(1, *Gs.input_shape[1:])
         step = (z1-z2)/frames
 
-        for frame_idx in enumerate(frames):
+        for frame_idx in range(0,frames):
             z = z1+(step*frame_idx)
             noise_rnd = np.random.RandomState(1) # fix noise
             tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
