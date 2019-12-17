@@ -113,7 +113,7 @@ python run_generator.py generate-images --network=gdrive:networks/stylegan2-car-
 python run_generator.py style-mixing-example --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
   --row-seeds=85,100,75,458,1500 --col-seeds=55,821,1789,293 --truncation-psi=1.0
 
-  # See truncation values from 0.1 to 2.0 on a single seed
+# See truncation values from 0.1 to 2.0 on a single seed
 python run_generator.py truncation-traversal --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
   --seed=66
 ```

@@ -14,6 +14,26 @@ import sys
 
 import pretrained_networks
 
+# from https://colab.research.google.com/drive/1ShgW6wohEFQtqs_znMna3dzrcVoABKIH
+def generate_zs_from_seeds(seeds):
+    zs = []
+    for seed_idx, seed in enumerate(seeds):
+        rnd = np.random.RandomState(seed)
+        z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+        zs.append(z)
+    return zs
+
+def generate_images_from_seeds(seeds, truncation_psi):
+    return generate_images(generate_zs_from_seeds(seeds), truncation_psi)
+
+def interpolate(zs, steps):
+   out = []
+   for i in range(len(zs)-1):
+    for index in range(steps):
+     fraction = index/float(steps) 
+     out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
+   return out
+
 
 def truncation_traversal(network_pkl, seed):
     print('Loading networks from "%s"...' % network_pkl)
@@ -63,6 +83,38 @@ def generate_images(network_pkl, seeds, truncation_psi):
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
+
+
+#----------------------------------------------------------------------------
+
+def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
+    print('Loading networks from "%s"...' % network_pkl)
+    _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
+    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    if truncation_psi is not None:
+        Gs_kwargs.truncation_psi = truncation_psi
+
+    if walk_type is 'line':
+        zs = generate_zs_from_seeds([5015289 , 9148088 ])
+
+        rnd = np.random.RandomState(seeds[0])
+        z1 = rnd.randn(1, *Gs.input_shape[1:])
+        rnd = np.random.RandomState(seeds[1])
+        z2 = rnd.randn(1, *Gs.input_shape[1:])
+        step = (z1-z2)/frames
+
+        for frame_idx in enumerate(frames):
+            z = z1+(step*frame_idx)
+            noise_rnd = np.random.RandomState(1) # fix noise
+            tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
+            images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % frame_idx))
+
+
 
 #----------------------------------------------------------------------------
 
@@ -156,10 +208,18 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
 
     subparsers = parser.add_subparsers(help='Sub-commands', dest='command')
 
-    parser_truncation_traversal = subparsers.add_parser('truncation-traversal', help='Generate images')
+    parser_truncation_traversal = subparsers.add_parser('truncation-traversal', help='Generate truncation walk')
     parser_truncation_traversal.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
-    parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='List of random seeds', required=True)
+    parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='Singular seed value', required=True)
     parser_truncation_traversal.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
+
+    parser_generate_latent_walk = subparsers.add_parser('generate-latent-walk', help='Generate latent walk')
+    parser_generate_latent_walk.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
+    parser_generate_latent_walk.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
+    parser_generate_latent_walk.add_argument('--walk-type', help='Type of walk (default: %(default)s)', default='line')
+    parser_generate_images.add_argument('--frames', type=_parse_num_range, help='Frame count (default: %(default)s', default=240)
+    parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
+    parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
@@ -193,6 +253,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     func_name_map = {
         'truncation-traversal': 'run_generator.truncation_traversal',
         'generate-images': 'run_generator.generate_images',
+        'generate-latent-walk': 'run_generator.generate_latent_walk',
         'style-mixing-example': 'run_generator.style_mixing_example'
     }
     dnnlib.submit_run(sc, func_name_map[subcmd], **kwargs)
