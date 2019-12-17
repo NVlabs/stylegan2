@@ -30,7 +30,7 @@ def interpolate(zs, steps):
    out = []
    for i in range(len(zs)-1):
     for index in range(steps):
-        fraction = index/float(steps-1)
+        fraction = index/float(steps)
         out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
    return out
 
@@ -111,11 +111,8 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
     if walk_type is 'line':
         zs = generate_zs_from_seeds(seeds,Gs)
 
-        latent1 = zs[0]
-        latent2 = zs[1]
-
-        number_of_steps = frames
-        generate_latent_images(interpolate([latent1,latent2],number_of_steps), truncation_psi)
+        number_of_steps = np.floor(frames/(len(zs)-1))
+        generate_latent_images(interpolate(zs,number_of_steps), truncation_psi)
 
 #----------------------------------------------------------------------------
 
