@@ -99,11 +99,14 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
         Gs_kwargs.truncation_psi = truncation_psi
 
     if walk_type is 'line':
-        zs = generate_zs_from_seeds(seeds)
-        step = (zs[0]-zs[1])/frames
+        rnd = np.random.RandomState(seeds[0])
+        z1 = rnd.randn(1, *Gs.input_shape[1:])
+        rnd = np.random.RandomState(seeds[1])
+        z2 = rnd.randn(1, *Gs.input_shape[1:])
+        step = (z1-z2)/frames
 
         for frame_idx in enumerate(frames):
-            z = zs[0]+(step*frame_idx)
+            z = z1+(step*frame_idx)
             noise_rnd = np.random.RandomState(1) # fix noise
             tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars})
             images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
