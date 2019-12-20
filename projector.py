@@ -15,7 +15,7 @@ from training import misc
 
 class Projector:
     def __init__(self):
-        self.num_steps                  = 1000
+        self.num_steps                  = 2000
         self.dlatent_avg_samples        = 10000
         self.initial_learning_rate      = 0.1
         self.initial_noise_factor       = 0.05
@@ -23,7 +23,7 @@ class Projector:
         self.lr_rampup_length           = 0.05
         self.noise_ramp_length          = 0.75
         self.regularize_noise_weight    = 1e5
-        self.verbose                    = False
+        self.verbose                    = True
         self.clone_net                  = True
 
         self._Gs                    = None
@@ -63,7 +63,7 @@ class Projector:
         # Find dlatent stats.
         self._info('Finding W midpoint and stddev using %d samples...' % self.dlatent_avg_samples)
         latent_samples = np.random.RandomState(123).randn(self.dlatent_avg_samples, *self._Gs.input_shapes[0][1:])
-        dlatent_samples = self._Gs.components.mapping.run(latent_samples, None)[:, :1, :] # [N, 1, 512]
+        dlatent_samples = self._Gs.components.mapping.run(latent_samples, None) # [N, 1, 512]
         self._dlatent_avg = np.mean(dlatent_samples, axis=0, keepdims=True) # [1, 1, 512]
         self._dlatent_std = (np.sum((dlatent_samples - self._dlatent_avg) ** 2) / self.dlatent_avg_samples) ** 0.5
         self._info('std = %g' % self._dlatent_std)
@@ -92,7 +92,8 @@ class Projector:
         self._dlatents_var = tf.Variable(tf.zeros([self._minibatch_size] + list(self._dlatent_avg.shape[1:])), name='dlatents_var')
         self._noise_in = tf.placeholder(tf.float32, [], name='noise_in')
         dlatents_noise = tf.random.normal(shape=self._dlatents_var.shape) * self._noise_in
-        self._dlatents_expr = tf.tile(self._dlatents_var + dlatents_noise, [1, self._Gs.components.synthesis.input_shape[1], 1])
+        #self._dlatents_expr = tf.tile(self._dlatents_var + dlatents_noise, [1, self._Gs.components.synthesis.input_shape[1], 1])
+        self._dlatents_expr = self._dlatents_var + dlatents_noise
         self._images_expr = self._Gs.components.synthesis.get_output_for(self._dlatents_expr, randomize_noise=False)
 
         # Downsample image to 256x256 if it's larger than that. VGG was built for 224x224 images.

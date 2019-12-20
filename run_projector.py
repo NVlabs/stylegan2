@@ -10,6 +10,7 @@ import dnnlib
 import dnnlib.tflib as tflib
 import re
 import sys
+import cv2, PIL
 
 import projector
 import pretrained_networks
@@ -18,15 +19,27 @@ from training import misc
 
 #----------------------------------------------------------------------------
 
+def write_video_frame(proj, video_out):
+    img = proj.get_images()[0]
+    img = misc.convert_to_pil_image(img, drange=[-1, 1])
+    video_frame = img.resize((512, 512))
+    video_out.write(cv2.cvtColor(np.array(video_frame).astype('uint8'), cv2.COLOR_RGB2BGR))
+
+
 def project_image(proj, targets, png_prefix, num_snapshots):
+    video_out = cv2.VideoWriter(png_prefix + '_video.avi', cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 24, (512, 512))
+
     snapshot_steps = set(proj.num_steps - np.linspace(0, proj.num_steps, num_snapshots, endpoint=False, dtype=int))
     misc.save_image_grid(targets, png_prefix + 'target.png', drange=[-1,1])
     proj.start(targets)
     while proj.get_cur_step() < proj.num_steps:
         print('\r%d / %d ... ' % (proj.get_cur_step(), proj.num_steps), end='', flush=True)
         proj.step()
+        write_video_frame(proj, video_out)
         if proj.get_cur_step() in snapshot_steps:
             misc.save_image_grid(proj.get_images(), png_prefix + 'step%04d.png' % proj.get_cur_step(), drange=[-1,1])
+
+    video_out.release()
     print('\r%-30s\r' % '', end='', flush=True)
 
 #----------------------------------------------------------------------------
