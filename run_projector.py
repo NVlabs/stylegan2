@@ -10,7 +10,7 @@ import dnnlib
 import dnnlib.tflib as tflib
 import re
 import sys
-import cv2, PIL
+import cv2, PIL, joblib
 
 import projector
 import pretrained_networks
@@ -39,6 +39,8 @@ def project_image(proj, targets, png_prefix, num_snapshots):
         if proj.get_cur_step() in snapshot_steps:
             misc.save_image_grid(proj.get_images(), png_prefix + 'step%04d.png' % proj.get_cur_step(), drange=[-1,1])
 
+    dlats = proj.get_dlatents()
+    joblib.dump(dlats, png_prefix + '_dlats.jbl')
     video_out.release()
     print('\r%-30s\r' % '', end='', flush=True)
 
