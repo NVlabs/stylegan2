@@ -22,7 +22,7 @@ You can generate latent representations of your own images using two scripts:
 
 2) Find latent representation of aligned images
 
-`python encode_images.py aligned_images/ generated_images/ latent_representations/ path_to_network.pkl`
+`python encode_images.py aligned_images/ generated_images/ latent_representations/`
 
 ### Original Readme
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)
