@@ -4,7 +4,7 @@
 ![cuDNN 7.3.1](https://img.shields.io/badge/cudnn-7.3.1-green.svg?style=plastic)
 ![License CC BY-NC](https://img.shields.io/badge/license-CC_BY--NC-green.svg?style=plastic)
 
-This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-encoder) for [NVlabs/stylegan2](https://github.com/NVlabs/stylegan2).
+This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-encoder) for [NVlabs/stylegan2](https://github.com/NVlabs/stylegan2), plus a modified StyleGAN2 projector.
 
 ![Teaser image](./docs/stylegan2encoder-teaser-1024x256.png)
 
@@ -16,21 +16,23 @@ This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-enc
 `cd stylegan2encoder`
 
 You can generate latent representations of your own images using two scripts:
+
 1) Extract and align faces from images
 
 `python align_images.py raw_images/ aligned_images/`
 
-2) Find latent representation of aligned images, using the original encoder
+2) Find latent representation of aligned images
 
 `python encode_images.py aligned_images/ generated_images/ latent_representations/`
 
 ### Generating latent representation of your images, using the modified projector
-
 Replace step 2 with:
 
 `python project_images.py aligned_images/ generated_images/`
 
-This is usually preferable. It also allows you to render a video of the optimization process. See `python project_images.py -h` for options.
+This is usually preferable. It also allows you to render a video of the optimization process. To see all available options, type:
+
+`python project_images.py -h`
  
 ## Original Readme
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)

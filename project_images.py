@@ -49,19 +49,22 @@ def project_image(proj, src_file, dst_dir, tmp_dir, video=False):
     np.save(filename, proj.get_dlatents()[0])
 
 
-def render_video(src_file, dst_dir, tmp_dir, num_frames, size, fps, codec, bitrate):
+def render_video(src_file, dst_dir, tmp_dir, num_frames, mode, size, fps, codec, bitrate):
 
     import PIL.Image
     import moviepy.editor
 
     def render_frame(t):
         frame = np.clip(np.ceil(t * fps), 1, num_frames)
-        canvas = PIL.Image.new('RGB', (2 * src_size, src_size))
-        canvas.paste(src_image, (0, 0))
         image = PIL.Image.open('%s/video/%08d.png' % (tmp_dir, frame))
-        canvas.paste(image, (src_size, 0))
+        if mode == 1:
+            canvas = image
+        else:
+            canvas = PIL.Image.new('RGB', (2 * src_size, src_size))
+            canvas.paste(src_image, (0, 0))
+            canvas.paste(image, (src_size, 0))
         if size != src_size:
-            canvas = canvas.resize((2 * size, size), PIL.Image.LANCZOS)
+            canvas = canvas.resize((mode * size, size), PIL.Image.LANCZOS)
         return np.array(canvas)
 
     src_image = PIL.Image.open(src_file)
@@ -77,7 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description='Project real-world images into StyleGAN2 latent space')
     parser.add_argument('src_dir', help='Directory with aligned images for projection')
     parser.add_argument('dst_dir', help='Output directory')
-    parser.add_argument('--tmp_dir', default='.stylegan2-tmp', help='Temporary directory for tfrecords and video frames')
+    parser.add_argument('--tmp-dir', default='.stylegan2-tmp', help='Temporary directory for tfrecords and video frames')
     parser.add_argument('--network-pkl', default='gdrive:networks/stylegan2-ffhq-config-f.pkl', help='StyleGAN2 network pickle filename')
     parser.add_argument('--vgg16-pkl', default='https://drive.google.com/uc?id=1N2-m9qszOeVC9Tq77WxsLnuWwOedQiD2', help='VGG16 network pickle filename')
     parser.add_argument('--num-steps', type=int, default=1000, help='Number of optimization steps')
@@ -85,10 +88,11 @@ def main():
     parser.add_argument('--initial-noise-factor', type=float, default=0.05, help='Initial noise factor')
     parser.add_argument('--verbose', type=bool, default=False, help='Verbose output')
     parser.add_argument('--video', type=bool, default=False, help='Render video of the optimization process')
-    parser.add_argument('--video-size', type=int, default=1024, help='Video size, resolution will be (2*size,size)')
+    parser.add_argument('--video-mode', type=int, default=1, help='Video mode: 1 for optimization only, 2 for source + optimization')
+    parser.add_argument('--video-size', type=int, default=1024, help='Video size (height in px)')
     parser.add_argument('--video-fps', type=int, default=25, help='Video framerate')
     parser.add_argument('--video-codec', default='libx264', help='Video codec')
-    parser.add_argument('--video-bitrate', default='10M', help='Video bitrate')
+    parser.add_argument('--video-bitrate', default='5M', help='Video bitrate')
     args = parser.parse_args()
 
     print('Loading networks from "%s"...' % args.network_pkl)
@@ -107,7 +111,7 @@ def main():
         project_image(proj, src_file, args.dst_dir, args.tmp_dir, video=args.video)
         if args.video:
             render_video(
-                src_file, args.dst_dir, args.tmp_dir, args.num_steps,
+                src_file, args.dst_dir, args.tmp_dir, args.num_steps, args.video_mode,
                 args.video_size, args.video_fps, args.video_codec, args.video_bitrate
             )
         shutil.rmtree(args.tmp_dir)
