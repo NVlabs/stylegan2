@@ -55,7 +55,7 @@ class TFRecordExporter:
         self.tfr_writers = []
         if self.print_progress:
             print('%-40s\r' % '', end='', flush=True)
-            print('Added %d images.' % self.cur_images)
+            print('Added %d image%s.' % (self.cur_images, 's'[:self.cur_images > 1]))
 
     def choose_shuffled_order(self): # Note: Images and labels must be added in shuffled order.
         order = np.arange(self.expected_images)

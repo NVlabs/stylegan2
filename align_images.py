@@ -28,7 +28,7 @@ if __name__ == "__main__":
     ALIGNED_IMAGES_DIR = sys.argv[2]
 
     landmarks_detector = LandmarksDetector(landmarks_model_path)
-    for img_name in os.listdir(RAW_IMAGES_DIR):
+    for img_name in [f for f in os.listdir(RAW_IMAGES_DIR) if f[0] not in '._']:
         raw_img_path = os.path.join(RAW_IMAGES_DIR, img_name)
         for i, face_landmarks in enumerate(landmarks_detector.get_landmarks(raw_img_path), start=1):
             face_img_name = '%s_%02d.png' % (os.path.splitext(img_name)[0], i)

@@ -1,4 +1,4 @@
-## StyleGAN2 &mdash; Encoder for Official TensorFlow Implementation
+## StyleGAN2 &mdash; Encoder/Projector for Official TensorFlow Implementation
 ![Python 3.6](https://img.shields.io/badge/python-3.6-green.svg?style=plastic)
 ![TensorFlow 1.10](https://img.shields.io/badge/tensorflow-1.10-green.svg?style=plastic)
 ![cuDNN 7.3.1](https://img.shields.io/badge/cudnn-7.3.1-green.svg?style=plastic)
@@ -8,7 +8,7 @@ This is a port of [Puzer/stylegan-encoder](https://github.com/Puzer/stylegan-enc
 
 ![Teaser image](./docs/stylegan2encoder-teaser-1024x256.png)
 
-### Generating latent representation of your images
+### Generating latent representation of your images, using the original encoder
 `pip install tensorflow-gpu==1.14`
 
 `git clone https://github.com/rolux/stylegan2encoder.git`
@@ -20,11 +20,19 @@ You can generate latent representations of your own images using two scripts:
 
 `python align_images.py raw_images/ aligned_images/`
 
-2) Find latent representation of aligned images
+2) Find latent representation of aligned images, using the original encoder
 
 `python encode_images.py aligned_images/ generated_images/ latent_representations/`
 
-### Original Readme
+### Generating latent representation of your images, using the modified projector
+
+Replace step 2 with:
+
+`python project_images.py aligned_images/ generated_images/`
+
+This is usually preferable. It also allows you to render a video of the optimization process. See `python project_images.py -h` for options.
+ 
+## Original Readme
 ![Teaser image](./docs/stylegan2-teaser-1024x256.png)
 
 **Analyzing and Improving the Image Quality of StyleGAN**<br>
