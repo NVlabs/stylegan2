@@ -23,7 +23,7 @@ class Projector:
         self.lr_rampup_length           = 0.05
         self.noise_ramp_length          = 0.75
         self.regularize_noise_weight    = 1e5
-        self.verbose                    = False
+        self.verbose                    = True
         self.clone_net                  = True
 
         self._Gs                    = None
