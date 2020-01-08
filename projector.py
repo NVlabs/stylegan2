@@ -48,8 +48,7 @@ class Projector:
         self._cur_step              = None
 
     def _info(self, *args):
-        if self.verbose:
-            print('Projector:', *args)
+        print('Projector:', *args)
 
     def set_network(self, Gs, minibatch_size=1):
         assert minibatch_size == 1
