@@ -49,6 +49,32 @@ nvcc test_nvcc.cu -o test_nvcc -run
 
 On Windows, the compilation requires Microsoft Visual Studio to be in `PATH`. We recommend installing [Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/) and adding into `PATH` using `"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat"`.
 
+## Using pre-trained networks
+
+Pre-trained networks are stored as `*.pkl` files on the [StyleGAN2 Google Drive folder](https://drive.google.com/open?id=1QHc-yF5C3DChRwSdZKcx1w6K8JvSxQi7). Below, you can either reference them directly using the syntax `gdrive:networks/<filename>.pkl`, or download them manually and reference by filename.
+
+```.bash
+# Generate uncurated ffhq images (matches paper Figure 12)
+python run_generator.py generate-images --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
+  --seeds=6600-6625 --truncation-psi=0.5
+
+# Generate curated ffhq images (matches paper Figure 11)
+python run_generator.py generate-images --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
+  --seeds=66,230,389,1518 --truncation-psi=1.0
+
+# Generate uncurated car images
+python run_generator.py generate-images --network=gdrive:networks/stylegan2-car-config-f.pkl \
+  --seeds=6000-6025 --truncation-psi=0.5
+
+# Example of style mixing (matches the corresponding video clip)
+python run_generator.py style-mixing-example --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
+  --row-seeds=85,100,75,458,1500 --col-seeds=55,821,1789,293 --truncation-psi=1.0
+```
+
+The results are placed in `results/<RUNNING_ID>/*.png`. You can change the location with `--result-dir`. For example, `--result-dir=~/my-stylegan2-results`.
+
+You can import the networks in your own Python code using `pickle.load()`. For this to work, you need to include the `dnnlib` source directory in `PYTHONPATH` and create a default TensorFlow session by calling `dnnlib.tflib.init_tf()`. See [run_generator.py](./run_generator.py) and [pretrained_networks.py](./pretrained_networks.py) for examples.
+
 ## Preparing datasets
 
 Datasets are stored as multi-resolution TFRecords, similar to the [original StyleGAN](https://github.com/NVlabs/stylegan). Each dataset consists of multiple `*.tfrecords` files stored under a common directory, e.g., `~/datasets/ffhq/ffhq-r*.tfrecords`. In the following sections, the datasets are referenced using a combination of `--dataset` and `--data-dir` arguments, e.g., `--dataset=ffhq --data-dir=~/datasets`.
@@ -80,33 +106,9 @@ python dataset_tool.py create_from_images ~/datasets/my-custom-dataset ~/my-cust
 python dataset_tool.py display ~/datasets/my-custom-dataset
 ```
 
-## Using pre-trained networks
+## Projecting images to latent space
 
-Pre-trained networks are stored as `*.pkl` files on the [StyleGAN2 Google Drive folder](https://drive.google.com/open?id=1QHc-yF5C3DChRwSdZKcx1w6K8JvSxQi7). Below, you can either reference them directly using the syntax `gdrive:networks/<filename>.pkl`, or download them manually and reference by filename.
-
-**Generating images**:
-
-```.bash
-# Generate uncurated ffhq images (matches paper Figure 12)
-python run_generator.py generate-images --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
-  --seeds=6600-6625 --truncation-psi=0.5
-
-# Generate curated ffhq images (matches paper Figure 11)
-python run_generator.py generate-images --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
-  --seeds=66,230,389,1518 --truncation-psi=1.0
-
-# Generate uncurated car images
-python run_generator.py generate-images --network=gdrive:networks/stylegan2-car-config-f.pkl \
-  --seeds=6000-6025 --truncation-psi=0.5
-
-# Example of style mixing (matches the corresponding video clip)
-python run_generator.py style-mixing-example --network=gdrive:networks/stylegan2-ffhq-config-f.pkl \
-  --row-seeds=85,100,75,458,1500 --col-seeds=55,821,1789,293 --truncation-psi=1.0
-```
-
-The results are placed in `results/<RUNNING_ID>/*.png`. You can change the location with `--result-dir`. For example, `--result-dir=~/my-stylegan2-results`.
-
-**Projecting images to latent space**:
+To find the matching latent vectors for a set of images, run:
 
 ```.bash
 # Project generated images
@@ -117,8 +119,6 @@ python run_projector.py project-generated-images --network=gdrive:networks/style
 python run_projector.py project-real-images --network=gdrive:networks/stylegan2-car-config-f.pkl \
   --dataset=car --data-dir=~/datasets
 ```
-
-You can import the networks in your own Python code using `pickle.load()`. For this to work, you need to include the `dnnlib` source directory in `PYTHONPATH` and create a default TensorFlow session by calling `dnnlib.tflib.init_tf()`. See [run_generator.py](./run_generator.py) and [pretrained_networks.py](./pretrained_networks.py) for examples.
 
 ## Training networks
 
