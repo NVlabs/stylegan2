@@ -128,7 +128,7 @@ def training_loop(
     network_snapshot_ticks  = 50,       # How often to save network snapshots? None = only save 'networks-final.pkl'.
     save_tf_graph           = False,    # Include full TensorFlow computation graph in the tfevents file?
     save_weight_histograms  = False,    # Include weight histograms in the tfevents file?
-    resume_pkl              = './networks/stylegan2-ffhq-config-f.pkl',     # Network pickle to resume training from, None = train from scratch.
+    resume_pkl              = './networks/ladiescrop1024-network-snapshot-010089.pkl',     # Network pickle to resume training from, None = train from scratch.
     resume_kimg             = 10000.0,      # Assumed training progress at the beginning. Affects reporting and training schedule.
     resume_time             = 0.0,      # Assumed wallclock time at the beginning. Affects reporting.
     resume_with_new_nets    = False):   # Construct new networks according to G_args and D_args before resuming training?
@@ -140,7 +140,7 @@ def training_loop(
     # Load training set.
     training_set = dataset.load_dataset(data_dir=dnnlib.convert_path(data_dir), verbose=True, **dataset_args)
     grid_size, grid_reals, grid_labels = misc.setup_snapshot_image_grid(training_set, **grid_args)
-    misc.save_image_grid(grid_reals, dnnlib.make_run_dir_path('reals.png'), drange=training_set.dynamic_range, grid_size=grid_size)
+    misc.save_image_grid(grid_reals, dnnlib.make_run_dir_path('reals.jpg'), drange=training_set.dynamic_range, grid_size=grid_size)
 
     # Construct or load networks.
     with tf.device('/gpu:0'):
@@ -160,7 +160,7 @@ def training_loop(
     sched = training_schedule(cur_nimg=total_kimg*1000, training_set=training_set, **sched_args)
     grid_latents = np.random.randn(np.prod(grid_size), *G.input_shape[1:])
     grid_fakes = Gs.run(grid_latents, grid_labels, is_validation=True, minibatch_size=sched.minibatch_gpu)
-    misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes_init.png'), drange=drange_net, grid_size=grid_size)
+    misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes_init.jpg'), drange=drange_net, grid_size=grid_size)
 
     # Setup training inputs.
     print('Building TensorFlow graph...')
@@ -335,7 +335,7 @@ def training_loop(
             # Save snapshots.
             if image_snapshot_ticks is not None and (cur_tick % image_snapshot_ticks == 0 or done):
                 grid_fakes = Gs.run(grid_latents, grid_labels, is_validation=True, minibatch_size=sched.minibatch_gpu)
-                misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes%06d.png' % (cur_nimg // 1000)), drange=drange_net, grid_size=grid_size)
+                misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes%06d.jpg' % (cur_nimg // 1000)), drange=drange_net, grid_size=grid_size)
             if network_snapshot_ticks is not None and (cur_tick % network_snapshot_ticks == 0 or done):
                 pkl = dnnlib.make_run_dir_path('network-snapshot-%06d.pkl' % (cur_nimg // 1000))
                 misc.save_pkl((G, D, Gs), pkl)
