@@ -76,7 +76,7 @@ def _parse_num_range(s):
     range_re = re.compile(r'^(\d+)-(\d+)$')
     m = range_re.match(s)
     if m:
-        return range(int(m.group(1)), int(m.group(2))+1)
+        return list(range(int(m.group(1)), int(m.group(2))+1))
     vals = s.split(',')
     return [int(x) for x in vals]
 
