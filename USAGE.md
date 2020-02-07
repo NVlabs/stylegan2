@@ -4,7 +4,7 @@ _Thanks to Steve Olsen for writing this up!_
 
 Video demo for training steps on [YouTube](https://www.youtube.com/watch?v=69YOjyAxum0)
 
-**Upload dataset:**
+### Upload dataset:
 - zip folder and upload to google drive
 - get shareable link -> advanced - > On - Public on the web
 - copy link [id#]
@@ -16,12 +16,12 @@ Video demo for training steps on [YouTube](https://www.youtube.com/watch?v=69YOj
 - $ `gdown —id [id#]`
 - $ `unzip dataset_name.zip`
 
-**Create custom dataset**
+### Create custom dataset
 
 in stylegan2 folder:
 $ `python dataset_tool.py create_from_images ~/stylegan2/datasets/dataset_name ./raw_datasets/dataset_name`
 
-**Run training**
+### Run training
 
 In stylegan2 folder:
 $ `python run_training.py --num-gpus=1 --data-dir=./datasets --config=config-f --dataset=dataset_name --mirror-augment=False --metrics=None`
@@ -34,7 +34,7 @@ Press up to get same command and add nohup to the beginning
  $ `nohup python run_training.py --num-gpus=1 --data-dir=./datasets --config=config-f --dataset=dataset_name --mirror-augment=False --metrics=None`
 nohup keeps process running in background
 
-**To Terminate:**
+### To Terminate:
 
 - run $ `nvidia-smi`
 - you will see a list of processes, you want to kill the PID # (column 2) of the one taking up the most GPU (far right)
