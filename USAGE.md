@@ -1,8 +1,8 @@
 _Thanks to Steve Olsen for writing this up!_ 
 
-##TRAINING
+## TRAINING
 
-github.com/dvschultz/stylegan2
+Video demo for training steps on [YouTube](https://www.youtube.com/watch?v=69YOjyAxum0)
 
 **Upload dataset:**
 - zip folder and upload to google drive
@@ -40,3 +40,7 @@ nohup keeps process running in background
 - you will see a list of processes, you want to kill the PID # (column 2) of the one taking up the most GPU (far right)
 - run $ `kill -9 [PID #]` (for example $ `kill -9 4817`)
 - run $ `nvidia-smi` again to confirm it stopped running
+
+## TESTING
+
+Video demo for testing (in Colab) on [YouTube](https://www.youtube.com/watch?v=-6p0zwHc5-8)
