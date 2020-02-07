@@ -36,8 +36,7 @@ nohup keeps process running in background
 
 **To Terminate:**
 
-run $ `nvidia-smi`
-you will see a list of processes, you want to kill the PID # (column 2) of the one taking up the most GPU (far right)
-run $ `kill -9 [PID #]` 
-(for example $ `kill -9 4817`)
-Run $ `nvidia-smi` again to confirm it stopped running
+- run $ `nvidia-smi`
+- you will see a list of processes, you want to kill the PID # (column 2) of the one taking up the most GPU (far right)
+- run $ `kill -9 [PID #]` (for example $ `kill -9 4817`)
+- run $ `nvidia-smi` again to confirm it stopped running
