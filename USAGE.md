@@ -8,7 +8,7 @@ Video demo for training steps on [YouTube](https://www.youtube.com/watch?v=69YOj
 1. zip folder and upload to google drive
 2. get shareable link -> advanced - > On - Public on the web
 3. copy link [id#]
-4. link (id# is string between https://drive.google.com/file/d/ and /view?usp=sharing) (mine was: 1kfAKPrHuGSQb93_NIcxWUbaN_cqgfrYx)
+4. link (id# is string between https://drive.google.com/file/d/ and /view?usp=sharing)
 5. $ `cd stylegan2`
 6. $ `mkdir raw_datasets`
 7. $ `pip install gdown`
