@@ -5,16 +5,16 @@ _Thanks to Steve Olsen for writing this up!_
 Video demo for training steps on [YouTube](https://www.youtube.com/watch?v=69YOjyAxum0)
 
 ### Upload dataset:
-- zip folder and upload to google drive
-- get shareable link -> advanced - > On - Public on the web
-- copy link [id#]
-- link (id# is string between https://drive.google.com/file/d/ and /view?usp=sharing) (mine was: 1kfAKPrHuGSQb93_NIcxWUbaN_cqgfrYx)
-- $ `cd stylegan2`
-- $ `mkdir raw_datasets`
-- $ `pip install gdown`
-- $ `cd raw_datasets`
-- $ `gdown —id [id#]`
-- $ `unzip dataset_name.zip`
+1. zip folder and upload to google drive
+2. get shareable link -> advanced - > On - Public on the web
+3. copy link [id#]
+4. link (id# is string between https://drive.google.com/file/d/ and /view?usp=sharing) (mine was: 1kfAKPrHuGSQb93_NIcxWUbaN_cqgfrYx)
+5. $ `cd stylegan2`
+6. $ `mkdir raw_datasets`
+7. $ `pip install gdown`
+8. $ `cd raw_datasets`
+9. $ `gdown —id [id#]`
+10. $ `unzip dataset_name.zip`
 
 ### Create custom dataset
 
