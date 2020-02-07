@@ -17,10 +17,12 @@ github.com/dvschultz/stylegan2
 - $ `unzip dataset_name.zip`
 
 **Create custom dataset**
+
 in stylegan2 folder:
 $ `python dataset_tool.py create_from_images ~/stylegan2/datasets/dataset_name ./raw_datasets/dataset_name`
 
 **Run training**
+
 In stylegan2 folder:
 $ `python run_training.py --num-gpus=1 --data-dir=./datasets --config=config-f --dataset=dataset_name --mirror-augment=False --metrics=None
 
@@ -33,6 +35,7 @@ Press up to get same command and add nohup to the beginning
 nohup keeps process running in background
 
 **To Terminate:**
+
 run $ `nvidia-smi`
 you will see a list of processes, you want to kill the PID # (column 2) of the one taking up the most GPU (far right)
 run $ `kill -9 [PID #]` 
