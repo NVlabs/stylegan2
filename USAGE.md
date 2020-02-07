@@ -24,7 +24,7 @@ $ `python dataset_tool.py create_from_images ~/stylegan2/datasets/dataset_name .
 **Run training**
 
 In stylegan2 folder:
-$ `python run_training.py --num-gpus=1 --data-dir=./datasets --config=config-f --dataset=dataset_name --mirror-augment=False --metrics=None
+$ `python run_training.py --num-gpus=1 --data-dir=./datasets --config=config-f --dataset=dataset_name --mirror-augment=False --metrics=None`
 
 Run once to check if working
 
