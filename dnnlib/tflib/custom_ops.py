@@ -63,7 +63,7 @@ def _run_cmd(cmd):
 
 def _prepare_nvcc_cli(opts):
     tf_include = tf.sysconfig.get_include()#.replace('\\lib\\site', '\\Lib\\site')
-    cmd = 'nvcc ' + opts.strip()
+    cmd = 'nvcc --std=c++11 -DNDEBUG ' + opts.strip()
     cmd += ' --disable-warnings'
     cmd += ' --include-path "%s"' % tf_include
     cmd += ' --include-path "%s"' % os.path.join(tf_include, 'tensorflow_core')
