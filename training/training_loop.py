@@ -128,7 +128,8 @@ def training_loop(
     network_snapshot_ticks  = 50,       # How often to save network snapshots? None = only save 'networks-final.pkl'.
     save_tf_graph           = False,    # Include full TensorFlow computation graph in the tfevents file?
     save_weight_histograms  = False,    # Include weight histograms in the tfevents file?
-    resume_pkl              = './networks/stylegan2-ffhq-config-f.pkl',     # Network pickle to resume training from, None = train from scratch.
+    # resume_pkl              = './networks/stylegan2-ffhq-config-f.pkl',     # Network pickle to resume training from, None = train from scratch.
+    resume_pkl              = 'latest',
     resume_kimg             = 10000.0,      # Assumed training progress at the beginning. Affects reporting and training schedule.
     resume_time             = 0.0,      # Assumed wallclock time at the beginning. Affects reporting.
     resume_with_new_nets    = False):   # Construct new networks according to G_args and D_args before resuming training?
@@ -144,6 +145,8 @@ def training_loop(
 
     # Construct or load networks.
     with tf.device('/gpu:0'):
+        if resume_pkl == 'latest':
+           resume_pkl, resume_kimg = misc.locate_latest_pkl(dnnlib.submit_config.run_dir_root)
         if resume_pkl is None or resume_with_new_nets:
             print('Constructing networks...')
             G = tflib.Network('G', num_channels=training_set.shape[0], resolution=training_set.shape[1], label_size=training_set.label_size, **G_args)
