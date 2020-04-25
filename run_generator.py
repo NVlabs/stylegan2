@@ -44,8 +44,8 @@ def generate_latent_images(zs, truncation_psi):
     if not isinstance(truncation_psi, list):
         truncation_psi = [truncation_psi] * len(zs)
     
-    temp_dir = 'frames%06d'%int(1000000*random.random())
-    os.system('mkdir %s'%temp_dir)
+    #temp_dir = 'frames%06d'%int(1000000*random.random())
+    #os.system('mkdir %s'%temp_dir)
     
     for z_idx, z in enumerate(zs):
         if isinstance(z,list):
@@ -57,7 +57,7 @@ def generate_latent_images(zs, truncation_psi):
         noise_rnd = np.random.RandomState(1) # fix noise
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save('%s/frame%05d.png' % (temp_dir, z_idx))
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % z_idx))
 
 def generate_images_in_w_space(dlatents, truncation_psi):
     Gs_kwargs = dnnlib.EasyDict()
@@ -74,7 +74,7 @@ def generate_images_in_w_space(dlatents, truncation_psi):
         #row_dlatents = (dlatent[np.newaxis] - dlatent_avg) * np.reshape(truncation_psi, [-1, 1, 1]) + dlatent_avg
         dl = (dlatent-dlatent_avg)*truncation_psi   + dlatent_avg
         row_images = Gs.components.synthesis.run(dlatent,  **Gs_kwargs)
-        PIL.Image.fromarray(row_images[0], 'RGB').save('%s/frame%05d.png' % (temp_dir, row))
+        PIL.Image.fromarray(row_images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % row))
 
 def line_interpolate(zs, steps):
    out = []
@@ -104,7 +104,7 @@ def truncation_traversal(network_pkl, seed=[0],start=-1.0,stop=1.0,increment=0.1
         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]        
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('truncation-frame%05d.png' % count))
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % count))
 
         trunc+=increment
         count+=1
