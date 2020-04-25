@@ -11,6 +11,9 @@ import dnnlib
 import dnnlib.tflib as tflib
 import re
 import sys
+from tqdm import tqdm_notebook as tqdm
+import scipy.interpolate as interpolate
+from opensimplex import OpenSimplex
 
 import pretrained_networks
 
@@ -26,12 +29,59 @@ def generate_zs_from_seeds(seeds,Gs):
 def generate_images_from_seeds(seeds, truncation_psi):
     return generate_images(generate_zs_from_seeds(seeds), truncation_psi)
 
-def interpolate(zs, steps):
+def convertZtoW(latent, truncation_psi=0.7, truncation_cutoff=9):
+    dlatent = Gs.components.mapping.run(latent, None) # [seed, layer, component]
+    dlatent_avg = Gs.get_var('dlatent_avg') # [component]
+    for i in range(truncation_cutoff):
+        dlatent[0][i] = (dlatent[0][i]-dlatent_avg)*truncation_psi + dlatent_avg
+    
+    return dlatent
+
+def generate_latent_images(zs, truncation_psi):
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    if not isinstance(truncation_psi, list):
+        truncation_psi = [truncation_psi] * len(zs)
+    
+    temp_dir = 'frames%06d'%int(1000000*random.random())
+    os.system('mkdir %s'%temp_dir)
+    
+    for z_idx, z in enumerate(zs):
+        if isinstance(z,list):
+          z = np.array(z).reshape(1,512)
+        elif isinstance(z,np.ndarray):
+          z.reshape(1,512)
+        print('Generating image for step %d/%d ...' % (z_idx, len(zs)))
+        Gs_kwargs.truncation_psi = truncation_psi[z_idx]
+        noise_rnd = np.random.RandomState(1) # fix noise
+        tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+        images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+        PIL.Image.fromarray(images[0], 'RGB').save('%s/frame%05d.png' % (temp_dir, z_idx))
+
+def generate_images_in_w_space(dlatents, truncation_psi):
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    Gs_kwargs.truncation_psi = truncation_psi
+    dlatent_avg = Gs.get_var('dlatent_avg') # [component]
+
+    # temp_dir = 'frames%06d'%int(1000000*random.random())
+    # os.system('mkdir %s'%temp_dir)
+
+    for row, dlatent in enumerate(dlatents):
+        print('Generating image for step %d/%d ...' % (row, len(dlatents)))
+        #row_dlatents = (dlatent[np.newaxis] - dlatent_avg) * np.reshape(truncation_psi, [-1, 1, 1]) + dlatent_avg
+        dl = (dlatent-dlatent_avg)*truncation_psi   + dlatent_avg
+        row_images = Gs.components.synthesis.run(dlatent,  **Gs_kwargs)
+        PIL.Image.fromarray(row_images[0], 'RGB').save('%s/frame%05d.png' % (temp_dir, row))
+
+def line_interpolate(zs, steps):
    out = []
    for i in range(len(zs)-1):
     for index in range(steps):
-        fraction = index/float(steps)
-        out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
+     fraction = index/float(steps) 
+     out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
    return out
 
 def truncation_traversal(network_pkl, seed=[0],start=-1.0,stop=1.0,increment=0.1):
@@ -100,18 +150,111 @@ def generate_latent_images(zs, truncation_psi):
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % z_idx))
+def valmap(value, istart, istop, ostart, ostop):
+  return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
 
-def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds):
+class OSN():
+  min=-1
+  max= 1
+
+  def __init__(self,seed,diameter):
+    self.tmp = OpenSimplex(seed)
+    self.d = diameter
+    self.x = 0
+    self.y = 0
+
+  def get_val(self,angle):
+    self.xoff = valmap(np.cos(angle), -1, 1, self.x, self.x + self.d);
+    self.yoff = valmap(np.sin(angle), -1, 1, self.y, self.y + self.d);
+    return self.tmp.noise2d(self.xoff,self.yoff)
+
+def get_noiseloop(endpoints, nf, d, start_seed):
+    features = []
+    zs = []
+    for i in range(512):
+      features.append(OSN(i+start_seed,d))
+
+    inc = (np.pi*2)/nf
+    for f in range(nf):
+      z = np.random.randn(1, 512)
+      for i in range(512):
+        z[0,i] = features[i].get_val(inc*f) 
+      zs.append(z)
+
+    return zs
+        
+def get_latent_interpolation_bspline(endpoints, nf, k, s, shuffle):
+    if shuffle:
+        random.shuffle(endpoints)
+    x = np.array(endpoints)
+    x = np.append(x, x[0,:].reshape(1, x.shape[1]), axis=0)
+    
+    nd = x.shape[1]
+    latents = np.zeros((nd, nf))
+    nss = list(range(1, 10)) + [10]*(nd-19) + list(range(10,0,-1))
+    for i in tqdm(range(nd-9)):
+        idx = list(range(i,i+10))
+        tck, u = interpolate.splprep([x[:,j] for j in range(i,i+10)], k=k, s=s)
+        out = interpolate.splev(np.linspace(0, 1, num=nf, endpoint=True), tck)
+        latents[i:i+10,:] += np.array(out)
+    latents = latents / np.array(nss).reshape((512,1))
+    return latents.T
+
+def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds,diameter=2.0, start_seed=0 ):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+    zs = generate_zs_from_seeds(seeds,Gs)
 
-    if walk_type is 'line':
-        zs = generate_zs_from_seeds(seeds,Gs)
-
+    walk_type = walk_type.split('-')
+    
+    if walk_type[0] == 'line':
         number_of_steps = int(frames/(len(zs)-1))+1
-        generate_latent_images(interpolate(zs,number_of_steps), truncation_psi)
+    
+        if (len(walk_type)>1 and walk_type[1] == 'w'):
+          ws = []
+          for i in range(len(zs)):
+            ws.append(convertZtoW(zs[i]))
+          points = line_interpolate(ws,number_of_steps)
+          zpoints = line_interpolate(zs,number_of_steps)
+        else:
+          points = line_interpolate(zs,number_of_steps)
+
+    # from Gene Kogan
+    elif walk_type[0] == 'bspline':
+        # bspline in w doesnt work yet
+        # if (len(walk_type)>1 and walk_type[1] == 'w'):
+        #   ws = []
+        #   for i in range(len(zs)):
+        #     ws.append(convertZtoW(zs[i]))
+
+        #   print(ws[0].shape)
+        #   w = []
+        #   for i in range(len(ws)):
+        #     w.append(np.asarray(ws[i]).reshape(512,18))
+        #   points = get_latent_interpolation_bspline(ws,frames,3, 20, shuffle=False)
+        # else:
+          z = []
+          for i in range(len(zs)):
+            z.append(np.asarray(zs[i]).reshape(512))
+          points = get_latent_interpolation_bspline(z,frames,3, 20, shuffle=False)
+
+    # from Dan Shiffman: https://editor.p5js.org/dvs/sketches/Gb0xavYAR
+    elif walk_type[0] == 'noiseloop':
+        points = get_noiseloop(None,frames,diameter,start_seed)
+
+    if (walk_type[0] == 'line' and len(walk_type)>1 and walk_type[1] == 'w'):
+      # print(points[0][:,:,1])
+      # print(zpoints[0][:,1])
+      # ws = []
+      # for i in enumerate(len(points)):
+      #   ws.append(convertZtoW(points[i]))
+      generate_images_in_w_space(points, truncation_psi)
+    elif (len(walk_type)>1 and walk_type[1] == 'w'):
+      print('%s is not currently supported in w space, please change your interpolation type' % (walk_type[0]))
+    else:
+      generate_latent_images(points, truncation_psi)
 
 #----------------------------------------------------------------------------
 
@@ -223,6 +366,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_latent_walk.add_argument('--walk-type', help='Type of walk (default: %(default)s)', default='line')
     parser_generate_latent_walk.add_argument('--frames', type=int, help='Frame count (default: %(default)s', default=240)
     parser_generate_latent_walk.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
+    parser_generate_latent_walk.add_argument('--diameter', type=float, help='diameter of noise loop' default=2.0)
+    parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from' default=0)
     parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
