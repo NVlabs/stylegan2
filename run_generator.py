@@ -366,8 +366,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_latent_walk.add_argument('--walk-type', help='Type of walk (default: %(default)s)', default='line')
     parser_generate_latent_walk.add_argument('--frames', type=int, help='Frame count (default: %(default)s', default=240)
     parser_generate_latent_walk.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
-    parser_generate_latent_walk.add_argument('--diameter', type=float, help='diameter of noise loop' default=2.0)
-    parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from' default=0)
+    parser_generate_latent_walk.add_argument('--diameter', type=float, help='diameter of noise loop', default=2.0)
+    parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from', default=0)
     parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
