@@ -34,7 +34,7 @@ def interpolate(zs, steps):
         out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
    return out
 
-def truncation_traversal(network_pkl, seed):
+def truncation_traversal(network_pkl, seed=[0],start=-1.0,stop=1.0,increment=0.1):
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
@@ -44,10 +44,9 @@ def truncation_traversal(network_pkl, seed):
     Gs_kwargs.randomize_noise = False
 
     count = 1
-    trunc = 0.1
-    increment = 0.01
+    trunc = start
 
-    while trunc < 2.01:
+    while trunc <= stop:
         Gs_kwargs.truncation_psi = trunc
         print('Generating truncation %0.2f' % trunc)
 
@@ -55,7 +54,7 @@ def truncation_traversal(network_pkl, seed):
         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]        
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % count))
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('truncation-frame%05d.png' % count))
 
         trunc+=increment
         count+=1
@@ -208,7 +207,10 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
 
     parser_truncation_traversal = subparsers.add_parser('truncation-traversal', help='Generate truncation walk')
     parser_truncation_traversal.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
-    parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='Singular seed value', required=True)
+    parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='Singular seed value')
+    parser_truncation_traversal.add_argument('--start', type=float, help='Starting value')
+    parser_truncation_traversal.add_argument('--stop', type=float, help='Stopping value')
+    parser_truncation_traversal.add_argument('--increment', type=float, help='Incrementing value')
     parser_truncation_traversal.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
     parser_generate_latent_walk = subparsers.add_parser('generate-latent-walk', help='Generate latent walk')
