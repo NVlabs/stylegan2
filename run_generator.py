@@ -190,6 +190,10 @@ _examples = '''examples:
 
   # Generate style mixing example (matches style mixing video clip)
   python %(prog)s style-mixing-example --network=gdrive:networks/stylegan2-ffhq-config-f.pkl --row-seeds=85,100,75,458,1500 --col-seeds=55,821,1789,293 --truncation-psi=1.0
+
+  # Generate truncation animation from one seed
+  python %(prog)s truncation_traversal --network=gdrive:networks/stylegan2-ffhq-config-f.pkl --seed=6600 --start=-1.0 --stop=1.0 --increment=0.1
+
 '''
 
 #----------------------------------------------------------------------------
