@@ -37,7 +37,7 @@ def convertZtoW(latent, truncation_psi=0.7, truncation_cutoff=9):
     
     return dlatent
 
-def generate_latent_images(zs, truncation_psi,save_npy=False,prefix='frame'):
+def generate_latent_images(zs, truncation_psi,save_npy,prefix):
     Gs_kwargs = dnnlib.EasyDict()
     Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
     Gs_kwargs.randomize_noise = False
@@ -165,21 +165,6 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
 
 #----------------------------------------------------------------------------
 
-def generate_latent_images(zs, truncation_psi):
-    Gs_kwargs = dnnlib.EasyDict()
-    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
-    Gs_kwargs.randomize_noise = False
-    if not isinstance(truncation_psi, list):
-        truncation_psi = [truncation_psi] * len(zs)
-        
-    imgs = []
-    for z_idx, z in enumerate(zs):
-        print('Generating image for step %d/%d ...' % (z_idx, len(zs)))
-        Gs_kwargs.truncation_psi = truncation_psi[z_idx]
-        noise_rnd = np.random.RandomState(1) # fix noise
-        tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-        images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('step%05d.png' % z_idx))
 def valmap(value, istart, istop, ostart, ostop):
   return ostart + (ostop - ostart) * ((value - istart) / (istop - istart))
 
@@ -284,7 +269,7 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds,d
     elif (len(walk_type)>1 and walk_type[1] == 'w'):
       print('%s is not currently supported in w space, please change your interpolation type' % (walk_type[0]))
     else:
-      generate_latent_images(points, truncation_psi)
+      generate_latent_images(points, truncation_psi,False,'frame')
 
 #----------------------------------------------------------------------------
 
