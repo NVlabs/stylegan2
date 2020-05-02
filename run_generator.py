@@ -148,9 +148,13 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
         print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
         rnd = np.random.RandomState(seed)
         
-        og_z = generate_zs_from_seeds(seed,Gs)
+        og_z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+        tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+        images = Gs.run(og_z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
+        
         zs = []
-        z_prefix = 'neighbor_of_%d' % seed
+        z_prefix = 'seed%04d_neighbor' % seed
 
         for s in range(num_samples):
             random = np.random.uniform(-diameter,diameter,[1,512])
