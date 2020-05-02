@@ -162,10 +162,8 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
 #             zs.append(np.clip((og_z+random),-1,1))
             new_z = np.clip((og_z+random),-1,1)
             images = Gs.run(new_z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%04d.png' % (z_prefix,seed))
-            
-        
-#         generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
+            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%04d.png' % (z_prefix,seed)))
+            # generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
 
 
 #----------------------------------------------------------------------------
