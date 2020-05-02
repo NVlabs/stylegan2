@@ -164,6 +164,8 @@ def generate_neighbors(network_pkl, seeds, diameter, truncation_psi, num_samples
             images = Gs.run(new_z, None, **Gs_kwargs) # [minibatch, height, width, channel]
             PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%04d.png' % (z_prefix,s)))
             # generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
+            if save_npy:
+                np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (z_prefix,s)), z)
 
 
 #----------------------------------------------------------------------------
