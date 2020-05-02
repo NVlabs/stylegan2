@@ -160,7 +160,7 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
             random = np.random.uniform(-diameter,diameter,[1,512])
             zs.append(np.clip((og_z+random),-1,1))
         
-        generate_latent_images(zs, truncation_psi, save_npy=save_vector, prefix=z_prefix)
+        generate_latent_images(zs, truncation_psi, save_vector, prefix=z_prefix)
 
 
 #----------------------------------------------------------------------------
