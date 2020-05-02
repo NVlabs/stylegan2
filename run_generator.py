@@ -148,7 +148,7 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
         print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
         rnd = np.random.RandomState(seed)
         
-        og_z = generate_zs_from_seeds(seed,Gs)[0]
+        og_z = generate_zs_from_seeds(seed,Gs)
         zs = []
         z_prefix = 'neighbor_of_%d' % seed
 
