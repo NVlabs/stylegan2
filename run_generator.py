@@ -124,7 +124,7 @@ def generate_images(network_pkl, seeds, truncation_psi):
         Gs_kwargs.truncation_psi = truncation_psi
 
     for seed_idx, seed in enumerate(seeds):
-        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
+        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx+1, len(seeds)))
         rnd = np.random.RandomState(seed)
         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
@@ -146,7 +146,7 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
         Gs_kwargs.truncation_psi = truncation_psi
 
     for seed_idx, seed in enumerate(seeds):
-        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
+        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx+1, len(seeds)))
         rnd = np.random.RandomState(seed)
         
         og_z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
@@ -159,9 +159,13 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
 
         for s in range(num_samples):
             random = np.random.uniform(-diameter,diameter,[1,512])
-            zs.append(np.clip((og_z+random),-1,1))
+#             zs.append(np.clip((og_z+random),-1,1))
+            new_z = np.clip((og_z+random),-1,1)
+            images = Gs.run(new_z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%04d.png' % (z_prefix,seed))
+            
         
-        generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
+#         generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
 
 
 #----------------------------------------------------------------------------
