@@ -133,7 +133,7 @@ def generate_images(network_pkl, seeds, truncation_psi):
         
 #----------------------------------------------------------------------------
 
-def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_samples=100, save_npy=False):
+def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_samples=100, save_vector=False):
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
@@ -156,7 +156,7 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
             random = np.random.uniform(-diameter,diameter,[1,512])
             zs.append(np.clip((og_z+random),-1,1))
         
-        generate_latent_images(zs, truncation_psi, save_npy, prefix=z_prefix)
+        generate_latent_images(zs, truncation_psi, save_npy=save_vector, prefix=z_prefix)
 
 
 #----------------------------------------------------------------------------
