@@ -400,7 +400,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_neighbors.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
     parser_generate_neighbors.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
     parser_generate_neighbors.add_argument('--diameter', type=float, help='distance around seed to sample from', default=0.1)
-    parser_generate_neighbors.add_argument('--save_vector', dest='save_vector', action='store_true' help='also save vector in .npy format')
+    parser_generate_neighbors.add_argument('--save_vector', dest='save_vector', action='store_true', help='also save vector in .npy format')
     parser_generate_neighbors.add_argument('--num_samples', type=int, help='How many neighbors to generate (default: %(default)s', default=25)
     parser_generate_neighbors.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
     parser_generate_neighbors.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
