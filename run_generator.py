@@ -37,7 +37,7 @@ def convertZtoW(latent, truncation_psi=0.7, truncation_cutoff=9):
     
     return dlatent
 
-def generate_latent_images(zs, truncation_psi,prefix='frame',save_npy=False):
+def generate_latent_images(zs, truncation_psi,save_npy=False,prefix='frame'):
     Gs_kwargs = dnnlib.EasyDict()
     Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
     Gs_kwargs.randomize_noise = False
@@ -150,13 +150,13 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
         
         og_z = generate_zs_from_seeds(seed,Gs)[0]
         zs = []
-        prefix = 'neighbor_of_%d' % seed
+        z_prefix = 'neighbor_of_%d' % seed
 
         for s in range(num_samples):
             random = np.random.uniform(-diameter,diameter,[1,512])
             zs.append(np.clip((og_z+random),-1,1))
         
-        generate_latent_images(zs, truncation_psi, prefix='neighbor', save_npy)
+        generate_latent_images(zs, truncation_psi, save_npy, prefix=z_prefix)
 
 
 #----------------------------------------------------------------------------
