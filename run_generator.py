@@ -133,7 +133,7 @@ def generate_images(network_pkl, seeds, truncation_psi):
         
 #----------------------------------------------------------------------------
 
-def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_samples=100, save_vector=False):
+def generate_neighbors(network_pkl, seeds, diameter, truncation_psi, num_samples, save_vector):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
@@ -160,7 +160,7 @@ def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_
         for s in range(num_samples):
             random = np.random.uniform(-diameter,diameter,[1,512])
 #             zs.append(np.clip((og_z+random),-1,1))
-            new_z = np.clip((og_z+random),-1,1)
+            new_z = np.clip(np.add(og_z+random),-1,1)
             images = Gs.run(new_z, None, **Gs_kwargs) # [minibatch, height, width, channel]
             PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%04d.png' % (z_prefix,s)))
             # generate_latent_images(zs, truncation_psi, save_vector, z_prefix)
