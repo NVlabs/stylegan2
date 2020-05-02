@@ -37,15 +37,12 @@ def convertZtoW(latent, truncation_psi=0.7, truncation_cutoff=9):
     
     return dlatent
 
-def generate_latent_images(zs, truncation_psi):
+def generate_latent_images(zs, truncation_psi,prefix='frame',save_npy=False):
     Gs_kwargs = dnnlib.EasyDict()
     Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
     Gs_kwargs.randomize_noise = False
     if not isinstance(truncation_psi, list):
         truncation_psi = [truncation_psi] * len(zs)
-    
-    #temp_dir = 'frames%06d'%int(1000000*random.random())
-    #os.system('mkdir %s'%temp_dir)
     
     for z_idx, z in enumerate(zs):
         if isinstance(z,list):
@@ -57,7 +54,9 @@ def generate_latent_images(zs, truncation_psi):
         noise_rnd = np.random.RandomState(1) # fix noise
         tflib.set_vars({var: noise_rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % z_idx))
+        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s%05d.png' % (prefix,z_idx)))
+        if save_npy:
+          np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (prefix,z_idx)), z)
 
 def generate_images_in_w_space(dlatents, truncation_psi):
     Gs_kwargs = dnnlib.EasyDict()
@@ -131,6 +130,33 @@ def generate_images(network_pkl, seeds, truncation_psi):
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
+        
+#----------------------------------------------------------------------------
+
+def generate_neighbors(network_pkl, seeds, diameter=.1, truncation_psi=0.5, num_samples=100, save_npy=False):
+    print('Loading networks from "%s"...' % network_pkl)
+    _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
+    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    if truncation_psi is not None:
+        Gs_kwargs.truncation_psi = truncation_psi
+
+    for seed_idx, seed in enumerate(seeds):
+        print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
+        rnd = np.random.RandomState(seed)
+        
+        og_z = generate_zs_from_seeds(seed,Gs)[0]
+        zs = []
+        prefix = 'neighbor_of_%d' % seed
+
+        for s in range(num_samples):
+            random = np.random.uniform(-diameter,diameter,[1,512])
+            zs.append(np.clip((og_z+random),-1,1))
+        
+        generate_latent_images(zs, truncation_psi, prefix='neighbor', save_npy)
 
 
 #----------------------------------------------------------------------------
@@ -370,6 +396,15 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from', default=0)
     parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
+    parser_generate_neighbors = subparsers.add_parser('generate-neighbors', help='Generate random neighbors of a seed')
+    parser_generate_neighbors.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
+    parser_generate_neighbors.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
+    parser_generate_neighbors.add_argument('--diameter', type=float, help='distance around seed to sample from', default=0.1)
+    parser_generate_neighbors.add_argument('--save_vector', dest='save_vector', action='store_true' help='also save vector in .npy format')
+    parser_generate_neighbors.add_argument('--num_samples', type=int, help='How many neighbors to generate (default: %(default)s', default=25)
+    parser_generate_neighbors.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
+    parser_generate_neighbors.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
+    
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
     parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
@@ -402,6 +437,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     func_name_map = {
         'truncation-traversal': 'run_generator.truncation_traversal',
         'generate-images': 'run_generator.generate_images',
+        'generate-neighbors': 'run_generator.generate_neighbors',
         'generate-latent-walk': 'run_generator.generate_latent_walk',
         'style-mixing-example': 'run_generator.style_mixing_example'
     }
