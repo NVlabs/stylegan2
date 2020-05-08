@@ -220,12 +220,22 @@ def get_latent_interpolation_bspline(endpoints, nf, k, s, shuffle):
     latents = latents / np.array(nss).reshape((512,1))
     return latents.T
 
-def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds,diameter=2.0, start_seed=0 ):
+def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, npys, diameter=2.0, start_seed=0 ):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
-    zs = generate_zs_from_seeds(seeds,Gs)
+    zs = []
+    
+    if(len(seeds) > 0)
+        zs = generate_zs_from_seeds(seeds,Gs)
+    elif(len(npys) > 0)
+        zs = npys
+        
+    if(len(zs) > 2 ) {
+        print('not enough values to generate walk')
+        return false;
+    }
 
     walk_type = walk_type.split('-')
     
@@ -338,6 +348,18 @@ def _parse_num_range(s):
     vals = s.split(',')
     return [int(x) for x in vals]
 
+
+#----------------------------------------------------------------------------
+
+def _parse_npy_files(files):
+    '''Accept a comma separated list of npy files and return a list of z vectors.'''
+    zs =[]
+    
+    for f in files:
+        zs.append(np.load(files[f]))
+        
+    return zs
+        
 #----------------------------------------------------------------------------
 
 _examples = '''examples:
@@ -375,6 +397,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_truncation_traversal = subparsers.add_parser('truncation-traversal', help='Generate truncation walk')
     parser_truncation_traversal.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
     parser_truncation_traversal.add_argument('--seed', type=_parse_num_range, help='Singular seed value')
+    parser_truncation_traversal.add_argument('--npys', type=_parse_npy_files, help='List of .npy files')
     parser_truncation_traversal.add_argument('--start', type=float, help='Starting value')
     parser_truncation_traversal.add_argument('--stop', type=float, help='Stopping value')
     parser_truncation_traversal.add_argument('--increment', type=float, help='Incrementing value')
@@ -386,13 +409,15 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_latent_walk.add_argument('--walk-type', help='Type of walk (default: %(default)s)', default='line')
     parser_generate_latent_walk.add_argument('--frames', type=int, help='Frame count (default: %(default)s', default=240)
     parser_generate_latent_walk.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
+    parser_generate_latent_walk.add_argument('--npys', type=_parse_npy_files, help='List of .npy files')
     parser_generate_latent_walk.add_argument('--diameter', type=float, help='diameter of noise loop', default=2.0)
     parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from', default=0)
     parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
     parser_generate_neighbors = subparsers.add_parser('generate-neighbors', help='Generate random neighbors of a seed')
     parser_generate_neighbors.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
-    parser_generate_neighbors.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
+    parser_generate_neighbors.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
+    parser_generate_neighbors.add_argument('--npys', type=_parse_npy_files, help='List of .npy files')
     parser_generate_neighbors.add_argument('--diameter', type=float, help='distance around seed to sample from', default=0.1)
     parser_generate_neighbors.add_argument('--save_vector', dest='save_vector', action='store_true', help='also save vector in .npy format')
     parser_generate_neighbors.add_argument('--num_samples', type=int, help='How many neighbors to generate (default: %(default)s', default=25)
@@ -401,7 +426,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
-    parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds', required=True)
+    parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
+    parser_generate_images.add_argument('--npys', type=_parse_npy_files, help='List of .npy files')
     parser_generate_images.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
     parser_generate_images.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
