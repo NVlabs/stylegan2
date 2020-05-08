@@ -14,6 +14,7 @@ import sys
 from tqdm import tqdm_notebook as tqdm
 import scipy.interpolate as interpolate
 from opensimplex import OpenSimplex
+import os
 
 import pretrained_networks
 
@@ -134,14 +135,15 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
         
     if npy_files is not None:
         npys = npy_files.split(',')
-        npys = npy_files
-        for npy_idx, npy in enumerate(npys):
-            print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
-            print(npy)
+        
+        for npy in range(len(npys)):
+            print('Generating image from npy (%d/%d) ...' % (npy+1, len(npys)))
+            print(npys[npy])
             rnd = np.random.RandomState(1)
             tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-            images = Gs.run(np.load(npy), None, **Gs_kwargs) # [minibatch, height, width, channel]
-            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('npy%04d.png' % npy))
+            images = Gs.run(np.load(npys[npy]), None, **Gs_kwargs) # [minibatch, height, width, channel]
+            name = os.path.basename(np.load(npys[npy])
+            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s.png' % name))
         
      
         
