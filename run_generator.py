@@ -132,15 +132,15 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
             images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
             PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
         
-    print( len(npy_files.split(',')) )
-        
-#     for npy_idx, npy in enumerate(npys):
-#         print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
-#         rnd = np.random.RandomState(1)
-#         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
-#         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-#         images = Gs.run(npy, None, **Gs_kwargs) # [minibatch, height, width, channel]
-#         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('npy%04d.png' % npy))
+    if npy_files is not None:
+        npys = npy_files.split(',')
+        for npy_idx, npy in enumerate(npys):
+            print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
+            print(npy)
+            rnd = np.random.RandomState(1)
+            tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+            images = Gs.run(np.load(npy), None, **Gs_kwargs) # [minibatch, height, width, channel]
+            PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('npy%04d.png' % npy))
         
      
         
