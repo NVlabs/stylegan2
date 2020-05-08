@@ -242,10 +242,9 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, 
     elif(len(npys) > 0):
         zs = npys
         
-    if(len(zs) > 2 ) {
+    if(len(zs) > 2 ):
         print('not enough values to generate walk')
         return false;
-    }
 
     walk_type = walk_type.split('-')
     
