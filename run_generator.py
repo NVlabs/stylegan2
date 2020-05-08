@@ -112,7 +112,7 @@ def truncation_traversal(network_pkl, seed=[0],start=-1.0,stop=1.0,increment=0.1
 
 #----------------------------------------------------------------------------
 
-def generate_images(network_pkl, seeds, npys, truncation_psi):
+def generate_images(network_pkl, seeds, npy_files, truncation_psi):
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
@@ -131,13 +131,15 @@ def generate_images(network_pkl, seeds, npys, truncation_psi):
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
         
-    for npy_idx, npy in enumerate(npys):
-        print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
-        rnd = np.random.RandomState(1)
-        z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
-        tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-        images = Gs.run(npy, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('npy%04d.png' % npy))
+    print( len(npy_files.split(',')) )
+        
+#     for npy_idx, npy in enumerate(npys):
+#         print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
+#         rnd = np.random.RandomState(1)
+#         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+#         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+#         images = Gs.run(npy, None, **Gs_kwargs) # [minibatch, height, width, channel]
+#         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('npy%04d.png' % npy))
         
      
         
