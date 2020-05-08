@@ -437,7 +437,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
     parser_generate_images.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
-    parser_generate_images.add_argument('--npys', help='List of .npy files' dest='npy_files')
+    parser_generate_images.add_argument('--npys', help='List of .npy files', dest='npy_files')
     parser_generate_images.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
     parser_generate_images.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
