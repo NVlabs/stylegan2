@@ -237,9 +237,9 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, 
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
     zs = []
     
-    if(len(seeds) > 0)
+    if(len(seeds) > 0):
         zs = generate_zs_from_seeds(seeds,Gs)
-    elif(len(npys) > 0)
+    elif(len(npys) > 0):
         zs = npys
         
     if(len(zs) > 2 ) {
