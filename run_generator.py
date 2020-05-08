@@ -362,6 +362,7 @@ def _parse_num_range(s):
 
 def _parse_npy_files(files):
     '''Accept a comma separated list of npy files and return a list of z vectors.'''
+    print(files)
     zs =[]
     
     for f in files:
