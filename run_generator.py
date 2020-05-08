@@ -133,7 +133,7 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
             PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
         
     if npy_files is not None:
-        npys = npy_files.split(',')
+        npys = npy_files
         for npy_idx, npy in enumerate(npys):
             print('Generating image from npy (%d/%d) ...' % (npy_idx+1, len(npys)))
             print(npy)
