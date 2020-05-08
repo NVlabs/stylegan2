@@ -138,10 +138,11 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
         
         for npy in range(len(npys)):
             print('Generating image from npy (%d/%d) ...' % (npy+1, len(npys)))
-            print(npys[npy])
+            z = np.load(npys[npy]
+            print(z.shape)
             rnd = np.random.RandomState(1)
             tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
-            images = Gs.run(np.load(npys[npy]), None, **Gs_kwargs) # [minibatch, height, width, channel]
+            images = Gs.run(), None, **Gs_kwargs) # [minibatch, height, width, channel]
             name = os.path.basename(npys[npy])
             PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('%s.png' % name))
         
