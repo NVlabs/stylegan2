@@ -123,7 +123,7 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
     if truncation_psi is not None:
         Gs_kwargs.truncation_psi = truncation_psi
 
-    if(type(seeds) != NoneType):
+    if seeds is not None:
         for seed_idx, seed in enumerate(seeds):
             print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx+1, len(seeds)))
             rnd = np.random.RandomState(seed)
