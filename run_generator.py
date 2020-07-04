@@ -86,7 +86,7 @@ def line_interpolate(zs, steps):
      out.append(zs[i+1]*fraction + zs[i]*(1-fraction))
    return out
 
-def truncation_traversal(network_pkl, seed=[0],start=-1.0,stop=1.0,increment=0.1):
+def truncation_traversal(network_pkl,npys,seed=[0],start=-1.0,stop=1.0,increment=0.1):
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
     noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
