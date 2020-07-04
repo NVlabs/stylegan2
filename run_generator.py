@@ -76,7 +76,7 @@ def generate_images_in_w_space(dlatents, truncation_psi,save_npy,prefix):
         row_images = Gs.components.synthesis.run(dlatent,  **Gs_kwargs)
         PIL.Image.fromarray(row_images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % row))
         if save_npy:
-            np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (prefix,row)), z)
+            np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (prefix,row)), dlatent)
 
 def line_interpolate(zs, steps):
    out = []
