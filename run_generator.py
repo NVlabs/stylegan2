@@ -153,7 +153,7 @@ def generate_images(network_pkl, seeds, npy_files, truncation_psi):
         
 #----------------------------------------------------------------------------
 
-def generate_neighbors(network_pkl, seeds, diameter, truncation_psi, num_samples, save_vector):
+def generate_neighbors(network_pkl, seeds, npys, diameter, truncation_psi, num_samples, save_vector):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
