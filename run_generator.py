@@ -59,7 +59,7 @@ def generate_latent_images(zs, truncation_psi,save_npy,prefix):
         if save_npy:
           np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (prefix,z_idx)), z)
 
-def generate_images_in_w_space(dlatents, truncation_psi):
+def generate_images_in_w_space(dlatents, truncation_psi,save_npy,prefix):
     Gs_kwargs = dnnlib.EasyDict()
     Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
     Gs_kwargs.randomize_noise = False
@@ -75,6 +75,8 @@ def generate_images_in_w_space(dlatents, truncation_psi):
         dl = (dlatent-dlatent_avg)*truncation_psi   + dlatent_avg
         row_images = Gs.components.synthesis.run(dlatent,  **Gs_kwargs)
         PIL.Image.fromarray(row_images[0], 'RGB').save(dnnlib.make_run_dir_path('frame%05d.png' % row))
+        if save_npy:
+            np.save(dnnlib.make_run_dir_path('%s%05d.npy' % (prefix,z_idx)), z)
 
 def line_interpolate(zs, steps):
    out = []
@@ -238,7 +240,7 @@ def get_latent_interpolation_bspline(endpoints, nf, k, s, shuffle):
     latents = latents / np.array(nss).reshape((512,1))
     return latents.T
 
-def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, npys, diameter=2.0, start_seed=0 ):
+def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, npys, diameter=2.0, start_seed=0, save_vector ):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
@@ -297,11 +299,11 @@ def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, 
       # ws = []
       # for i in enumerate(len(points)):
       #   ws.append(convertZtoW(points[i]))
-      generate_images_in_w_space(points, truncation_psi)
+      generate_images_in_w_space(points, truncation_psi,save_vector,'frame')
     elif (len(walk_type)>1 and walk_type[1] == 'w'):
       print('%s is not currently supported in w space, please change your interpolation type' % (walk_type[0]))
     else:
-      generate_latent_images(points, truncation_psi,False,'frame')
+      generate_latent_images(points, truncation_psi,save_vector,'frame')
 
 #----------------------------------------------------------------------------
 
@@ -428,6 +430,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_generate_latent_walk.add_argument('--frames', type=int, help='Frame count (default: %(default)s', default=240)
     parser_generate_latent_walk.add_argument('--seeds', type=_parse_num_range, help='List of random seeds')
     parser_generate_latent_walk.add_argument('--npys', type=_parse_npy_files, help='List of .npy files')
+    parser_generate_latent_walk.add_argument('--save_vector', dest='save_vector', action='store_true', help='also save vector in .npy format')
     parser_generate_latent_walk.add_argument('--diameter', type=float, help='diameter of noise loop', default=2.0)
     parser_generate_latent_walk.add_argument('--start_seed', type=int, help='random seed to start noise loop from', default=0)
     parser_generate_latent_walk.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
