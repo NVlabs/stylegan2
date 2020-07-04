@@ -240,7 +240,7 @@ def get_latent_interpolation_bspline(endpoints, nf, k, s, shuffle):
     latents = latents / np.array(nss).reshape((512,1))
     return latents.T
 
-def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, npys, diameter=2.0, start_seed=0, save_vector ):
+def generate_latent_walk(network_pkl, truncation_psi, walk_type, frames, seeds, npys, save_vector, diameter=2.0, start_seed=0 ):
     global _G, _D, Gs, noise_vars
     print('Loading networks from "%s"...' % network_pkl)
     _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
