@@ -120,13 +120,10 @@ def get_plugin(cuda_file):
 
         # Select compiler options.
         compile_opts = ''
-        if os.name == 'nt':
-            compile_opts += '"%s"' % os.path.join(tf.sysconfig.get_lib(), 'python', '_pywrap_tensorflow_internal.lib')
-        elif os.name == 'posix':
-            compile_opts += '"%s"' % os.path.join(tf.sysconfig.get_lib(), 'python', '_pywrap_tensorflow_internal.so')
-            compile_opts += ' --compiler-options \'-fPIC -D_GLIBCXX_USE_CXX11_ABI=0\''
-        else:
-            assert False # not Windows or Linux, w00t?
+        if os.name == 'posix':
+            compile_opts += ' --compiler-options \'-fPIC\''
+        compile_opts += ' --compiler-options \'' + ' '.join(tf.sysconfig.get_compile_flags()) + '\''
+        compile_opts += ' --linker-options \'' + ' '.join(tf.sysconfig.get_link_flags()) + '\''
         compile_opts += ' --gpu-architecture=%s' % _get_cuda_gpu_arch_string()
         compile_opts += ' --use_fast_math'
         nvcc_cmd = _prepare_nvcc_cli(compile_opts)
