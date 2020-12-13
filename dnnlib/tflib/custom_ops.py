@@ -25,8 +25,8 @@ do_not_hash_included_headers = False # Speed up compilation by assuming that hea
 verbose = True # Print status messages to stdout.
 
 compiler_bindir_search_path = [
-    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64', #MSVC 15.7.2
-    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64', #MSVC 15.9.3
+    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64',
+    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64',
     'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.23.28105/bin/Hostx64/x64',
     'C:/Program Files (x86)/Microsoft Visual Studio 14.0/vc/bin',
 ]
