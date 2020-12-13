@@ -25,7 +25,8 @@ do_not_hash_included_headers = False # Speed up compilation by assuming that hea
 verbose = True # Print status messages to stdout.
 
 compiler_bindir_search_path = [
-    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64',
+    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.14.26428/bin/Hostx64/x64', #MSVC 15.7.2
+    'C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Tools/MSVC/14.16.27023/bin/Hostx64/x64', #MSVC 15.9.3
     'C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.23.28105/bin/Hostx64/x64',
     'C:/Program Files (x86)/Microsoft Visual Studio 14.0/vc/bin',
 ]
@@ -34,6 +35,15 @@ compiler_bindir_search_path = [
 # Internal helper funcs.
 
 def _find_compiler_bindir():
+    #Derive MSVC compiler path in windows system path variables
+    path_env = os.getenv('PATH')
+    if path_env is not None:
+        env_path_list = path_env.split(";");
+        for env_path_value in env_path_list:
+            if _compiler_path_validator(env_path_value) and os.path.isdir(env_path_value):
+                return env_path_value
+    
+    #Derive MSVC compiler path from compiler_bindir_search_path array
     for compiler_path in compiler_bindir_search_path:
         if os.path.isdir(compiler_path):
             return compiler_path
@@ -78,6 +88,15 @@ def _prepare_nvcc_cli(opts):
         cmd += ' --compiler-bindir "%s"' % compiler_bindir
     cmd += ' 2>&1'
     return cmd
+
+def _compiler_path_validator(path):
+    if path[:76] == 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Tools\\MSVC\\' and path[-16:] == '\\bin\\Hostx64\\x64':
+        return True
+    elif path[:76] == 'C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\' and path[-16:] == '\\bin\\Hostx64\\x64':
+        return True
+    elif path == 'C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\vc\\bin':
+        return True
+    return False
 
 #----------------------------------------------------------------------------
 # Main entry point.
