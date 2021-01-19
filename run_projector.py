@@ -10,15 +10,20 @@ import dnnlib
 import dnnlib.tflib as tflib
 import re
 import sys
+from os.path import basename
 
 import projector
 import pretrained_networks
 from training import dataset
 from training import misc
+from dnnlib.wandb_utils import WandbLogger
 
 #----------------------------------------------------------------------------
 
+wandb_logger = WandbLogger(project='stylegan2', name='generation', config=None, job_type='generation')
+
 def project_image(proj, targets, png_prefix, num_snapshots):
+    print("proj.num_steps==>",basename(png_prefix))
     snapshot_steps = set(proj.num_steps - np.linspace(0, proj.num_steps, num_snapshots, endpoint=False, dtype=int))
     misc.save_image_grid(targets, png_prefix + 'target.png', drange=[-1,1])
     proj.start(targets)
@@ -27,6 +32,9 @@ def project_image(proj, targets, png_prefix, num_snapshots):
         proj.step()
         if proj.get_cur_step() in snapshot_steps:
             misc.save_image_grid(proj.get_images(), png_prefix + 'step%04d.png' % proj.get_cur_step(), drange=[-1,1])
+            wandb_logger.log({'Projections/'+basename(png_prefix):
+                              png_prefix + 'step%04d.png' % proj.get_cur_step()},flush=True)
+    wandb_logger.log({'Targets/'+basename(png_prefix): png_prefix + 'target.png'}, flush=True)
     print('\r%-30s\r' % '', end='', flush=True)
 
 #----------------------------------------------------------------------------
@@ -127,6 +135,7 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
         sys.exit(1)
 
     kwargs = vars(args)
+    wandb_logger.run.config.update(kwargs)
     sc = dnnlib.SubmitConfig()
     sc.num_gpus = 1
     sc.submit_target = dnnlib.SubmitTarget.LOCAL

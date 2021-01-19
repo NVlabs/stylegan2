@@ -138,13 +138,13 @@ def training_loop(
     tflib.init_tf(tf_config)
     num_gpus = dnnlib.submit_config.num_gpus
     wandb_logger = WandbLogger(project='stylegan2', name='train-'+dataset_args['tfrecord_dir'], 
-                   config=dnnlib.submit_config,group="training")
+                   config=dnnlib.submit_config, job_type="training")
 
     # Load training set.
     training_set = dataset.load_dataset(data_dir=dnnlib.convert_path(data_dir), verbose=True, **dataset_args)
     grid_size, grid_reals, grid_labels = misc.setup_snapshot_image_grid(training_set, **grid_args)
     misc.save_image_grid(grid_reals, dnnlib.make_run_dir_path('reals.png'), drange=training_set.dynamic_range, grid_size=grid_size)
-    wandb_logger.log_image(dnnlib.make_run_dir_path('reals.png'), 'Real Samples')
+    wandb_logger.log({'Real Samples':dnnlib.make_run_dir_path('reals.png')})
     
     # Construct or load networks.
     with tf.device('/gpu:0'):
@@ -165,7 +165,7 @@ def training_loop(
     grid_latents = np.random.randn(np.prod(grid_size), *G.input_shape[1:])
     grid_fakes = Gs.run(grid_latents, grid_labels, is_validation=True, minibatch_size=sched.minibatch_gpu)
     misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes_init.png'), drange=drange_net, grid_size=grid_size)
-    wandb_logger.log_image(dnnlib.make_run_dir_path('fakes_init.png'), 'Initial Fakes')
+    wandb_logger.log({'Initial Fakes': dnnlib.make_run_dir_path('fakes_init.png')})
     
     # Setup training inputs.
     print('Building TensorFlow graph...')
@@ -340,7 +340,7 @@ def training_loop(
             if image_snapshot_ticks is not None and (cur_tick % image_snapshot_ticks == 0 or done):
                 grid_fakes = Gs.run(grid_latents, grid_labels, is_validation=True, minibatch_size=sched.minibatch_gpu)
                 misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes%06d.png' % (cur_nimg // 1000)), drange=drange_net, grid_size=grid_size)
-                wandb_logger.log_image(dnnlib.make_run_dir_path('fakes%06d.png' % (cur_nimg // 1000)), 'fake')
+                wandb_logger.log({'fake': dnnlib.make_run_dir_path('fakes%06d.png' % (cur_nimg // 1000))})
             if network_snapshot_ticks is not None and (cur_tick % network_snapshot_ticks == 0 or done):
                 pkl = dnnlib.make_run_dir_path('network-snapshot-%06d.pkl' % (cur_nimg // 1000))
                 misc.save_pkl((G, D, Gs), pkl)
