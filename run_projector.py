@@ -23,7 +23,6 @@ from dnnlib.wandb_utils import WandbLogger
 wandb_logger = WandbLogger(project='stylegan2', name='generation', config=None, job_type='generation')
 
 def project_image(proj, targets, png_prefix, num_snapshots):
-    print("proj.num_steps==>",basename(png_prefix))
     snapshot_steps = set(proj.num_steps - np.linspace(0, proj.num_steps, num_snapshots, endpoint=False, dtype=int))
     misc.save_image_grid(targets, png_prefix + 'target.png', drange=[-1,1])
     proj.start(targets)
