@@ -4,4 +4,3 @@ run pip3 install \
 pillow \
 requests
 
-env TF_FORCE_GPU_ALLOW_GROWTH=true
