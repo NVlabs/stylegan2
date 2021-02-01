@@ -13,7 +13,7 @@ Abstract: *The style-based GAN architecture (StyleGAN) yields state-of-the-art r
 For business inquiries, please contact [researchinquiries@nvidia.com](mailto:researchinquiries@nvidia.com)<br>
 For press and other inquiries, please contact Hector Marinez at [hmarinez@nvidia.com](mailto:hmarinez@nvidia.com)<br>
 
-**&#9733;&#9733;&#9733; New version of StyleGAN2 with ADA is available at [https://github.com/NVlabs/stylegan2-ada](https://github.com/NVlabs/stylegan2-ada) &#9733;&#9733;&#9733;**
+**&#9733;&#9733;&#9733; NEW: [StyleGAN2-ADA-PyTorch](https://github.com/NVlabs/stylegan2-ada-pytorch) is now available; see the full list of versions [here](https://nvlabs.github.io/stylegan2/versions.html) &#9733;&#9733;&#9733;**
 
 | Additional material | &nbsp;
 | :--- | :----------
