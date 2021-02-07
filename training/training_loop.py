@@ -7,6 +7,7 @@
 """Main training script."""
 
 import numpy as np
+from dnnlib.comet_utils import CometLogger
 import tensorflow as tf
 import dnnlib
 import dnnlib.tflib as tflib
@@ -133,9 +134,11 @@ def training_loop(
     resume_time             = 0.0,      # Assumed wallclock time at the beginning. Affects reporting.
     resume_with_new_nets    = False):   # Construct new networks according to G_args and D_args before resuming training?
 
-    # Initialize dnnlib and TensorFlow.
+    # Initialize dnnlib,TensorFlow and comet.ml
     tflib.init_tf(tf_config)
     num_gpus = dnnlib.submit_config.num_gpus
+    comet_config='./comet_config.json'
+    cometlogger=CometLogger(comet_config)
 
     # Load training set.
     training_set = dataset.load_dataset(data_dir=dnnlib.convert_path(data_dir), verbose=True, **dataset_args)
@@ -331,7 +334,7 @@ def training_loop(
             autosummary('Timing/total_hours', total_time / (60.0 * 60.0))
             autosummary('Timing/total_days', total_time / (24.0 * 60.0 * 60.0))
 
-            # Save snapshots.
+            #Save snapshots.
             if image_snapshot_ticks is not None and (cur_tick % image_snapshot_ticks == 0 or done):
                 grid_fakes = Gs.run(grid_latents, grid_labels, is_validation=True, minibatch_size=sched.minibatch_gpu)
                 misc.save_image_grid(grid_fakes, dnnlib.make_run_dir_path('fakes%06d.png' % (cur_nimg // 1000)), drange=drange_net, grid_size=grid_size)
