@@ -3,7 +3,8 @@
 # This work is made available under the Nvidia Source Code License-NC.
 # To view a copy of this license, visit
 # https://nvlabs.github.io/stylegan2/license.html
-
+%pip install comet_ml 
+import comet_ml as cm
 import argparse
 import numpy as np
 import PIL.Image
@@ -126,6 +127,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     )
 
     subparsers = parser.add_subparsers(help='Sub-commands', dest='command')
+    
+    cm.Experiment("ZAlcUGShsKebfkZaJPqwgMtEO")
 
     parser_generate_images = subparsers.add_parser('generate-images', help='Generate images')
     parser_generate_images.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
