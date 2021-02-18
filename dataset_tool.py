@@ -18,6 +18,7 @@ import numpy as np
 import tensorflow as tf
 import PIL.Image
 import dnnlib.tflib as tflib
+import pickle 
 
 from training import dataset
 
@@ -526,6 +527,33 @@ def create_from_images(tfrecord_dir, image_dir, shuffle):
             tfr.add_image(img)
 
 #----------------------------------------------------------------------------
+            
+def create_from_pickle(tfrecord_dir, pickle_path, shuffle):
+    tf.enable_eager_execution()
+    print('Loading images from "%s"' % pickle_path)
+    data = None
+    with open(pickle_path, 'rb') as f:
+        data = pickle.load(f)
+    image_filenames = []
+    image_filenames += data['train']['norms']
+    image_filenames += data['train']['highs']
+    image_filenames += data['train']['lows']
+    image_filenames += data['train']['unlabl']
+    
+    if len(image_filenames) == 0:
+        error('Failed to load pickle data :(')
+    else:
+        print("Loaded file count: ", len(image_filenames))
+
+    with TFRecordExporter(tfrecord_dir, len(image_filenames)) as tfr:
+        for idx in range(len(image_filenames)):
+            img = np.asarray(PIL.Image.open(image_filenames[idx]))
+            img = tf.image.random_crop(img, (256,256,3)).numpy()
+            img = img.transpose([2, 0, 1]) # HWC => CHW
+            tfr.add_image(img)
+    
+        
+#----------------------------------------------------------------------------
 
 def create_from_hdf5(tfrecord_dir, hdf5_filename, shuffle):
     print('Loading HDF5 archive from "%s"' % hdf5_filename)
@@ -623,6 +651,12 @@ def execute_cmdline(argv):
                                             'create_from_images datasets/mydataset myimagedir')
     p.add_argument(     'tfrecord_dir',     help='New dataset directory to be created')
     p.add_argument(     'image_dir',        help='Directory containing the images')
+    p.add_argument(     '--shuffle',        help='Randomize image order (default: 1)', type=int, default=1)
+    
+    p = add_command(    'create_from_pickle', 'Create dataset from a directory full of images.',
+                                            'create_from_pickle datasets/mydataset pickle')
+    p.add_argument(     'tfrecord_dir',     help='New dataset directory to be created')
+    p.add_argument(     'pickle_path',        help='Pickle containing the images')
     p.add_argument(     '--shuffle',        help='Randomize image order (default: 1)', type=int, default=1)
 
     p = add_command(    'create_from_hdf5', 'Create dataset from legacy HDF5 archive.',
