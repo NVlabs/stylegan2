@@ -1,12 +1,17 @@
-PROJECT_ID='for-nikita'
-BUCKET_NAME='for-nikita'
-LOAD='DATASETS'
-PATH_TO_DATASETS='style-GAN2/datasets/256-gray'
-RESOLUTION=256
-MODE="gray"
-COUNT=5000 #Кол-во изображений для тестового датасета. Не передавать аргумент для использования всех изображений
+#----------------------------------SETTINGS------------------------------------#
 
-DATASET_FOLDER="${MODE}-${RESOLUTION}"
+PROJECT_ID='for-nikita' #ID проекта
+BUCKET_NAME='for-nikita' #Имя Bucket
+LOAD='DATASETS' #DATASETS (загрузка датасета из GS) \
+                #или IMAGES (создание датасета и его загрузка на GS).
+PATH_TO_DATASETS='style-GAN2/datasets/256-gray' #Путь до датасета на GS
+DATASET_FOLDER="img-gray-256" # Каталог для сохранения датасета на GS
+RESOLUTION=256 #Разрешение img 
+MODE="gray" #gray or rgb
+COUNT=5000 #Кол-во изображений для тестового датасета. 
+           #Не передавать аргумент для использования всех изображений
+
+#------------------------------------------------------------------------------#
 
 gcloud auth login
 gcloud config set project $PROJECT_ID
