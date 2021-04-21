@@ -1,6 +1,6 @@
 PROJECT_ID='for-nikita'
 BUCKET_NAME='for-nikita'
-LOAD='IMAGES'
+LOAD='DATASETS'
 PATH_TO_DATASETS='style-GAN2/datasets/256-gray'
 RESOLUTION=256
 MODE="gray"
@@ -46,8 +46,10 @@ fi
 if [ $LOAD = "DATASETS" ]; then
   echo Копирование датасета из GS 
 	mkdir -p ./datasets/custom/;
-  gsutil -m cp -r gs://{bucket_name}/{path_to_datasets}/*.tfrecords ./datasets/custom;
+  gsutil -m cp -r gs://${BUCKET_NAME}/${PATH_TO_DATASETS}/*.tfrecords ./datasets/custom;
 fi
+
+
 
 
 
