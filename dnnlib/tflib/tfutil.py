@@ -8,13 +8,15 @@
 
 import os
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 
 # Silence deprecation warnings from TensorFlow 1.13 onwards
 import logging
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
-import tensorflow.contrib   # requires TensorFlow 1.x!
-tf.contrib = tensorflow.contrib
+#import tensorflow.contrib   # requires TensorFlow 1.x!
+#tf.contrib = tensorflow.contrib
 
 from typing import Any, Iterable, List, Union
 
