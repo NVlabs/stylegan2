@@ -76,6 +76,10 @@ The results are placed in `results/<RUNNING_ID>/*.png`. You can change the locat
 
 You can import the networks in your own Python code using `pickle.load()`. For this to work, you need to include the `dnnlib` source directory in `PYTHONPATH` and create a default TensorFlow session by calling `dnnlib.tflib.init_tf()`. See [run_generator.py](./run_generator.py) and [pretrained_networks.py](./pretrained_networks.py) for examples.
 
+## Running on Google Colabs
+
+stylegan2.ipynb can be used to run pre-trained networks on [Google Colabs](https://colab.research.google.com).
+
 ## Preparing datasets
 
 Datasets are stored as multi-resolution TFRecords, similar to the [original StyleGAN](https://github.com/NVlabs/stylegan). Each dataset consists of multiple `*.tfrecords` files stored under a common directory, e.g., `~/datasets/ffhq/ffhq-r*.tfrecords`. In the following sections, the datasets are referenced using a combination of `--dataset` and `--data-dir` arguments, e.g., `--dataset=ffhq --data-dir=~/datasets`.
