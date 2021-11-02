@@ -97,10 +97,10 @@ def get_plugin(cuda_file):
         print('Setting up TensorFlow plugin "%s": ' % cuda_file_base, end='', flush=True)
     try:
         # Hash CUDA source.
-        md5 = hashlib.md5()
+        sha256 = hashlib.sha256()
         with open(cuda_file, 'rb') as f:
-            md5.update(f.read())
-        md5.update(b'\n')
+            sha256.update(f.read())
+        sha256.update(b'\n')
 
         # Hash headers included by the CUDA code by running it through the preprocessor.
         if not do_not_hash_included_headers:
@@ -115,8 +115,8 @@ def get_plugin(cuda_file):
                     for ln in f:
                         if not ln.startswith(b'# ') and not ln.startswith(b'#line '): # ignore line number pragmas
                             ln = ln.replace(bad_file_str, good_file_str)
-                            md5.update(ln)
-                    md5.update(b'\n')
+                            sha256.update(ln)
+                    sha256.update(b'\n')
 
         # Select compiler options.
         compile_opts = ''
@@ -132,13 +132,13 @@ def get_plugin(cuda_file):
         nvcc_cmd = _prepare_nvcc_cli(compile_opts)
 
         # Hash build configuration.
-        md5.update(('nvcc_cmd: ' + nvcc_cmd).encode('utf-8') + b'\n')
-        md5.update(('tf.VERSION: ' + tf.VERSION).encode('utf-8') + b'\n')
-        md5.update(('cuda_cache_version_tag: ' + cuda_cache_version_tag).encode('utf-8') + b'\n')
+        sha256.update(('nvcc_cmd: ' + nvcc_cmd).encode('utf-8') + b'\n')
+        sha256.update(('tf.VERSION: ' + tf.VERSION).encode('utf-8') + b'\n')
+        sha256.update(('cuda_cache_version_tag: ' + cuda_cache_version_tag).encode('utf-8') + b'\n')
 
         # Compile if not already compiled.
         bin_file_ext = '.dll' if os.name == 'nt' else '.so'
-        bin_file = os.path.join(cuda_cache_path, cuda_file_name + '_' + md5.hexdigest() + bin_file_ext)
+        bin_file = os.path.join(cuda_cache_path, cuda_file_name + '_' + sha256.hexdigest() + bin_file_ext)
         if not os.path.isfile(bin_file):
             if verbose:
                 print('Compiling... ', end='', flush=True)
