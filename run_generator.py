@@ -33,7 +33,12 @@ def generate_images(network_pkl, seeds, truncation_psi):
         z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
-        PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
+        if images[0].shape[2] == 1:
+          H, W = images[0].shape[0], images[0].shape[1]
+          img = images[0].reshape(H, W)
+        else:
+          img = images[0]
+        PIL.Image.fromarray(img).save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
 
 #----------------------------------------------------------------------------
 
@@ -68,7 +73,12 @@ def style_mixing_example(network_pkl, row_seeds, col_seeds, truncation_psi, col_
 
     print('Saving images...')
     for (row_seed, col_seed), image in image_dict.items():
-        PIL.Image.fromarray(image, 'RGB').save(dnnlib.make_run_dir_path('%d-%d.png' % (row_seed, col_seed)))
+        if image.shape == 1:
+          H, W = image.shape[0], image.shape[1]
+          img = image.reshape(H, W)
+        else:
+          img = image
+        PIL.Image.fromarray(image).save(dnnlib.make_run_dir_path('%d-%d.png' % (row_seed, col_seed)))
 
     print('Saving image grid...')
     _N, _C, H, W = Gs.output_shape
