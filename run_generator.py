@@ -13,8 +13,11 @@ import re
 import sys
 
 import pretrained_networks
+from dnnlib.wandb_utils import WandbLogger
 
 #----------------------------------------------------------------------------
+wandb_logger = WandbLogger(project='stylegan2', name='generation', 
+                   config=None, job_type='generation')
 
 def generate_images(network_pkl, seeds, truncation_psi):
     print('Loading networks from "%s"...' % network_pkl)
@@ -30,11 +33,11 @@ def generate_images(network_pkl, seeds, truncation_psi):
     for seed_idx, seed in enumerate(seeds):
         print('Generating image for seed %d (%d/%d) ...' % (seed, seed_idx, len(seeds)))
         rnd = np.random.RandomState(seed)
-        z = rnd.randn(1, *Gs.input_shape[1:]) # [minibatch, component]
+        z = rnd.randn(1, *Gs.input_shape[1:]) #[minibatch, component]
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
-
+        wandb_logger.log({'seed%04d.png' % seed: dnnlib.make_run_dir_path('seed%04d.png' % seed)}, flush=True)
 #----------------------------------------------------------------------------
 
 def style_mixing_example(network_pkl, row_seeds, col_seeds, truncation_psi, col_styles, minibatch_size=4):
@@ -69,7 +72,8 @@ def style_mixing_example(network_pkl, row_seeds, col_seeds, truncation_psi, col_
     print('Saving images...')
     for (row_seed, col_seed), image in image_dict.items():
         PIL.Image.fromarray(image, 'RGB').save(dnnlib.make_run_dir_path('%d-%d.png' % (row_seed, col_seed)))
-
+        wandb_logger.log({'Img_%d-%d'%(row_seed, col_seed): dnnlib.make_run_dir_path('%d-%d.png' % (row_seed, col_seed))},
+                        flush=True)
     print('Saving image grid...')
     _N, _C, H, W = Gs.output_shape
     canvas = PIL.Image.new('RGB', (W * (len(col_seeds) + 1), H * (len(row_seeds) + 1)), 'black')
@@ -84,6 +88,7 @@ def style_mixing_example(network_pkl, row_seeds, col_seeds, truncation_psi, col_
                 key = (row_seed, row_seed)
             canvas.paste(PIL.Image.fromarray(image_dict[key], 'RGB'), (W * col_idx, H * row_idx))
     canvas.save(dnnlib.make_run_dir_path('grid.png'))
+    wandb_logger.log({'Images Grid': dnnlib.make_run_dir_path('grid.png')}, flush=True)
 
 #----------------------------------------------------------------------------
 
@@ -143,12 +148,11 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
 
     args = parser.parse_args()
     kwargs = vars(args)
+    wandb_logger.run.config.update(kwargs)
     subcmd = kwargs.pop('command')
-
     if subcmd is None:
         print ('Error: missing subcommand.  Re-run with --help for usage.')
         sys.exit(1)
-
     sc = dnnlib.SubmitConfig()
     sc.num_gpus = 1
     sc.submit_target = dnnlib.SubmitTarget.LOCAL
@@ -161,10 +165,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
         'style-mixing-example': 'run_generator.style_mixing_example'
     }
     dnnlib.submit_run(sc, func_name_map[subcmd], **kwargs)
-
 #----------------------------------------------------------------------------
 
 if __name__ == "__main__":
     main()
-
 #----------------------------------------------------------------------------

@@ -187,5 +187,6 @@ def save_summaries(file_writer, global_step=None):
             file_writer.add_summary(layout)
         with tf.device(None), tf.control_dependencies(None):
             _merge_op = tf.summary.merge_all()
-
-    file_writer.add_summary(_merge_op.eval(), global_step)
+    _merge_op_eval = _merge_op.eval()
+    file_writer.add_summary(_merge_op_eval, global_step)
+    return _merge_op_eval
