@@ -296,17 +296,15 @@ def training_loop(
             # Slow path with gradient accumulation.
             else:
                 for _round in rounds:
-                    tflib.run(G_train_op, feed_dict)
-                if run_G_reg:
-                    for _round in rounds:
+                    tflib.run([G_train_op, data_fetch_op], feed_dict)
+                    if run_G_reg:
                         tflib.run(G_reg_op, feed_dict)
                 tflib.run(Gs_update_op, feed_dict)
                 for _round in rounds:
-                    tflib.run(data_fetch_op, feed_dict)
                     tflib.run(D_train_op, feed_dict)
-                if run_D_reg:
-                    for _round in rounds:
+                    if run_D_reg:
                         tflib.run(D_reg_op, feed_dict)
+                    tflib.run(data_fetch_op, feed_dict)
 
         # Perform maintenance tasks once per tick.
         done = (cur_nimg >= total_kimg * 1000)
