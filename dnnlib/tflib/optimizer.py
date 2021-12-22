@@ -6,6 +6,7 @@
 
 """Helper wrapper for a Tensorflow optimizer."""
 
+import platform
 import numpy as np
 import tensorflow as tf
 
@@ -18,12 +19,9 @@ from .. import util
 
 from .tfutil import TfExpression, TfExpressionEx
 
-try:
-    # TensorFlow 1.13
-    from tensorflow.python.ops import nccl_ops
-except:
-    # Older TensorFlow versions
-    import tensorflow.contrib.nccl as nccl_ops
+_collective_ops_warning_printed = False
+_collective_ops_group_key       = 831766147
+_collective_ops_instance_key    = 436340067
 
 class Optimizer:
     """A Wrapper for tf.train.Optimizer.
@@ -193,12 +191,12 @@ class Optimizer:
         # Sum gradients across devices.
         if len(self._devices) > 1:
             with tfutil.absolute_name_scope(self.scope + "/Broadcast"), tf.device(None):
-                for all_vars in zip(*[device.grad_clean.keys() for device in self._devices.values()]):
-                    if len(all_vars) > 0 and all(dim > 0 for dim in all_vars[0].shape.as_list()): # NCCL does not support zero-sized tensors.
-                        all_grads = [device.grad_clean[var] for device, var in zip(self._devices.values(), all_vars)]
-                        all_grads = nccl_ops.all_sum(all_grads)
-                        for device, var, grad in zip(self._devices.values(), all_vars, all_grads):
-                            device.grad_clean[var] = grad
+                if platform.system() == "Windows":    # Windows => NCCL ops are not available.
+                    self._broadcast_fallback()
+                elif tf.VERSION.startswith("1.15."):  # TF 1.15 => NCCL ops are broken: https://github.com/tensorflow/tensorflow/issues/41539
+                    self._broadcast_fallback()
+                else:                                 # Otherwise => NCCL ops are safe to use.
+                    self._broadcast_nccl()
 
         # Apply updates separately on each device.
         for device_idx, device in enumerate(self._devices.values()):
@@ -247,7 +245,7 @@ class Optimizer:
 
                 # Last device => report statistics.
                 if device_idx == len(self._devices) - 1:
-                    all_ops.append(autosummary.autosummary(self.id + "/learning_rate", self.learning_rate))
+                    all_ops.append(autosummary.autosummary(self.id + "/learning_rate", tf.convert_to_tensor(self.learning_rate)))
                     all_ops.append(autosummary.autosummary(self.id + "/overflow_frequency", tf.where(all_ok, 0, 1), condition=acc_ok))
                     if self.use_loss_scaling:
                         all_ops.append(autosummary.autosummary(self.id + "/loss_scaling_log2", device.loss_scaling_var))
@@ -285,6 +283,42 @@ class Optimizer:
         if not self.use_loss_scaling:
             return value
         return value * tfutil.exp2(-self.get_loss_scaling_var(value.device)) # pylint: disable=invalid-unary-operand-type
+
+    def _broadcast_nccl(self):
+        """Sum gradients across devices using NCCL ops (fast path)."""
+        from tensorflow.python.ops import nccl_ops # pylint: disable=no-name-in-module
+        for all_vars in zip(*[device.grad_clean.keys() for device in self._devices.values()]):
+            if any(x.shape.num_elements() > 0 for x in all_vars):
+                all_grads = [device.grad_clean[var] for device, var in zip(self._devices.values(), all_vars)]
+                all_grads = nccl_ops.all_sum(all_grads)
+                for device, var, grad in zip(self._devices.values(), all_vars, all_grads):
+                    device.grad_clean[var] = grad
+
+    def _broadcast_fallback(self):
+        """Sum gradients across devices using TensorFlow collective ops (slow fallback path)."""
+        from tensorflow.python.ops import collective_ops # pylint: disable=no-name-in-module
+        global _collective_ops_warning_printed, _collective_ops_group_key, _collective_ops_instance_key
+        if all(x.shape.num_elements() == 0 for device in self._devices.values() for x in device.grad_clean.values()):
+            return
+        if not _collective_ops_warning_printed:
+            print("------------------------------------------------------------------------")
+            print("WARNING: Using slow fallback implementation for inter-GPU communication.")
+            print("Please use TensorFlow 1.14 on Linux for optimal training performance.")
+            print("------------------------------------------------------------------------")
+            _collective_ops_warning_printed = True
+        for device in self._devices.values():
+            with tf.device(device.name):
+                combo = [tf.reshape(x, [x.shape.num_elements()]) for x in device.grad_clean.values()]
+                combo = tf.concat(combo, axis=0)
+                combo = collective_ops.all_reduce(combo, merge_op='Add', final_op='Id',
+                    group_size=len(self._devices), group_key=_collective_ops_group_key,
+                    instance_key=_collective_ops_instance_key)
+                cur_ofs = 0
+                for var, grad_old in device.grad_clean.items():
+                    grad_new = tf.reshape(combo[cur_ofs : cur_ofs + grad_old.shape.num_elements()], grad_old.shape)
+                    cur_ofs += grad_old.shape.num_elements()
+                    device.grad_clean[var] = grad_new
+        _collective_ops_instance_key += 1
 
 
 class SimpleAdam:

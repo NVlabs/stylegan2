@@ -179,7 +179,7 @@ class PR(metric_base.MetricBase):
 
     def _evaluate(self, Gs, Gs_kwargs, num_gpus):
         minibatch_size = num_gpus * self.minibatch_per_gpu
-        feature_net = misc.load_pkl('http://d36zk2xti64re0.cloudfront.net/stylegan1/networks/metrics/vgg16.pkl')
+        feature_net = misc.load_pkl('https://nvlabs-fi-cdn.nvidia.com/stylegan/networks/metrics/vgg16.pkl')
 
         # Calculate features for reals.
         cache_file = self._get_cache_file_for_reals(num_images=self.num_images)
