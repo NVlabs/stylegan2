@@ -14,16 +14,16 @@ from training import misc
 #----------------------------------------------------------------------------
 
 class Projector:
-    def __init__(self):
-        self.num_steps                  = 1000
-        self.dlatent_avg_samples        = 10000
-        self.initial_learning_rate      = 0.1
-        self.initial_noise_factor       = 0.05
+    def __init__(self,num_steps=1000,initial_learning_rate=0.1,initial_noise_factor=0.05):
+        self.num_steps                  = num_steps
+        self.dlatent_avg_samples        = 1000
+        self.initial_learning_rate      = initial_learning_rate
+        self.initial_noise_factor       = initial_noise_factor
         self.lr_rampdown_length         = 0.25
         self.lr_rampup_length           = 0.05
         self.noise_ramp_length          = 0.75
         self.regularize_noise_weight    = 1e5
-        self.verbose                    = False
+        self.verbose                    = True
         self.clone_net                  = True
 
         self._Gs                    = None
@@ -104,10 +104,10 @@ class Projector:
 
         # Loss graph.
         self._info('Building loss graph...')
-        self._target_images_var = tf.Variable(tf.zeros(proc_images_expr.shape), name='target_images_var')
+        self._target_images_var = tf.Variable(tf.zeros(self._images_expr.shape), name='target_images_var')
         if self._lpips is None:
             self._lpips = misc.load_pkl('http://d36zk2xti64re0.cloudfront.net/stylegan1/networks/metrics/vgg16_zhang_perceptual.pkl')
-        self._dist = self._lpips.get_output_for(proc_images_expr, self._target_images_var)
+        self._dist = self._lpips.get_output_for(self._images_expr, self._target_images_var)
         self._loss = tf.reduce_sum(self._dist)
 
         # Noise regularization graph.
@@ -150,12 +150,13 @@ class Projector:
         # Prepare target images.
         self._info('Preparing target images...')
         target_images = np.asarray(target_images, dtype='float32')
-        target_images = (target_images + 1) * (255 / 2)
+        # target_images = (target_images + 1) * (255 / 2)
         sh = target_images.shape
         assert sh[0] == self._minibatch_size
         if sh[2] > self._target_images_var.shape[2]:
             factor = sh[2] // self._target_images_var.shape[2]
             target_images = np.reshape(target_images, [-1, sh[1], sh[2] // factor, factor, sh[3] // factor, factor]).mean((3, 5))
+            print('gagan note: resizing something that shouldnt be resized?\n')
 
         # Initialize optimization state.
         self._info('Initializing optimization state...')

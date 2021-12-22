@@ -547,11 +547,14 @@ def create_from_pickle(tfrecord_dir, pickle_path, shuffle):
 
     with TFRecordExporter(tfrecord_dir, len(image_filenames)) as tfr:
         for idx in range(len(image_filenames)):
-            img = np.asarray(PIL.Image.open(image_filenames[idx]))
-            img = tf.image.random_crop(img, (256,256,3)).numpy()
+            img = PIL.Image.open(image_filenames[idx])
+            img = img.resize((256,256))
+            img = np.asarray(img)
             img = img.transpose([2, 0, 1]) # HWC => CHW
             tfr.add_image(img)
     
+#            img = np.asarray(PIL.Image.open(image_filenames[idx]))
+#            img = tf.image.random_crop(img, (256,256,3)).numpy()
         
 #----------------------------------------------------------------------------
 
