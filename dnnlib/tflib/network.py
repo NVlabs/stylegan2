@@ -547,7 +547,7 @@ class Network:
 
                 tf.summary.histogram(name, var)
 
-#----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Backwards-compatible emulation of legacy output transformation in Network.run().
 
 _print_legacy_warning = True

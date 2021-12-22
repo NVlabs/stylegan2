@@ -12,6 +12,9 @@ import dnnlib.tflib as tflib
 import re
 import sys
 
+import os
+import numpy as np
+
 import pretrained_networks
 
 #----------------------------------------------------------------------------
@@ -34,6 +37,50 @@ def generate_images(network_pkl, seeds, truncation_psi):
         tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
         images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
         PIL.Image.fromarray(images[0], 'RGB').save(dnnlib.make_run_dir_path('seed%04d.png' % seed))
+
+#----------------------------------------------------------------------------
+
+def generate_images_of_mean(network_pkl, count, truncation_psi=0.7, fixed_noise=True):
+    count = int(count)
+    print('Loading networks from "%s"...' % network_pkl)
+    _G, _D, Gs = pretrained_networks.load_networks(network_pkl)
+    noise_vars = [var for name, var in Gs.components.synthesis.vars.items() if name.startswith('noise')]
+
+    Gs_kwargs = dnnlib.EasyDict()
+    Gs_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_kwargs.randomize_noise = False
+    if truncation_psi is not None:
+        Gs_kwargs.truncation_psi = truncation_psi
+
+    rnd = np.random.RandomState(42)
+    w_avg = Gs.get_var('dlatent_avg') # [component]
+
+    Gs_syn_kwargs = dnnlib.EasyDict()
+    Gs_syn_kwargs.output_transform = dict(func=tflib.convert_images_to_uint8, nchw_to_nhwc=True)
+    Gs_syn_kwargs.randomize_noise = False
+    Gs_syn_kwargs.minibatch_size = 1
+
+    # w code means
+    latents_dir = '/data/yoder_lab/means_highprob'
+    for mean_code in os.listdir(latents_dir):
+        if mean_code.endswith('.npy') and mean_code[-9] == 'w':
+            w = np.load(os.path.join(latents_dir, mean_code)) # [minibatch, component]
+            print('shape: ', w.shape)
+            w = w_avg + (w - w_avg) * truncation_psi # [minibatch, layer, component]
+
+            for idx in range(0,count):
+                tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+                images = Gs.components.synthesis.run(w, **Gs_syn_kwargs)
+                PIL.Image.fromarray(images[0], 'RGB').save('/data/yoder_lab/means_highprob/cat_%s_%04d.png' % (mean_code[-7],idx))
+
+    # z code means
+    # for mean_code in os.listdir(latents_dir):
+    #     if mean_code.endswith('.npy') and mean_code[5] == 'z':
+    #         z = np.load(os.path.join(latents_dir, mean_code))
+    #         for idx in range(0,count):
+    #             tflib.set_vars({var: rnd.randn(*var.shape.as_list()) for var in noise_vars}) # [height, width]
+    #             images = Gs.run(z, None, **Gs_kwargs) # [minibatch, height, width, channel]
+    #             PIL.Image.fromarray(images[0], 'RGB').save('/data/yoder_lab/means/latent_means_w_fixed/cat_%s_%04d.png' % (mean_code[7],idx))
 
 #----------------------------------------------------------------------------
 
@@ -120,7 +167,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='''StyleGAN2 generator.
 
-Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
+        Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
         epilog=_examples,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
@@ -141,6 +188,12 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
     parser_style_mixing_example.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
     parser_style_mixing_example.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
 
+    parser_style_mixing_example = subparsers.add_parser('generate-means', help='Generate style mixing video')
+    parser_style_mixing_example.add_argument('--network', help='Network pickle filename', dest='network_pkl', required=True)
+    parser_style_mixing_example.add_argument('--count', help='num to make', dest='count', default=100)
+    parser_style_mixing_example.add_argument('--truncation-psi', type=float, help='Truncation psi (default: %(default)s)', default=0.5)
+    parser_style_mixing_example.add_argument('--result-dir', help='Root directory for run results (default: %(default)s)', default='results', metavar='DIR')
+
     args = parser.parse_args()
     kwargs = vars(args)
     subcmd = kwargs.pop('command')
@@ -158,7 +211,8 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
 
     func_name_map = {
         'generate-images': 'run_generator.generate_images',
-        'style-mixing-example': 'run_generator.style_mixing_example'
+        'style-mixing-example': 'run_generator.style_mixing_example',
+        'generate-means': 'run_generator.generate_images_of_mean'
     }
     dnnlib.submit_run(sc, func_name_map[subcmd], **kwargs)
 
