@@ -5,7 +5,7 @@
 # https://nvlabs.github.io/stylegan2/license.html
 
 """Main training script."""
-
+%pip install comet_ml
 import numpy as np
 import tensorflow as tf
 import dnnlib
@@ -15,9 +15,22 @@ from dnnlib.tflib.autosummary import autosummary
 from training import dataset
 from training import misc
 from metrics import metric_base
+from comet_ml import Experiment
 
 #----------------------------------------------------------------------------
 # Just-in-time processing of training images before feeding them to the networks.
+
+params = {
+    'dropout' :0.2,
+    'batch_size' : 64,
+    'epochs' : 4,
+    'layer-1-size' :128,
+    'layer-2-size' :128,
+    'initial-lr' : 1e-2,
+    'decay-steps' : 2000,
+    'decay-rate' : 0.9,
+    'optimizer' : 'adam'
+}
 
 def process_reals(x, labels, lod, mirror_augment, drange_data, drange_net):
     with tf.name_scope('DynamicRange'):
@@ -136,11 +149,20 @@ def training_loop(
     # Initialize dnnlib and TensorFlow.
     tflib.init_tf(tf_config)
     num_gpus = dnnlib.submit_config.num_gpus
+    
+    e = Experiment("Your API Key")
+    e.log_parameters(params)
+
+    
+    
 
     # Load training set.
     training_set = dataset.load_dataset(data_dir=dnnlib.convert_path(data_dir), verbose=True, **dataset_args)
     grid_size, grid_reals, grid_labels = misc.setup_snapshot_image_grid(training_set, **grid_args)
     misc.save_image_grid(grid_reals, dnnlib.make_run_dir_path('reals.png'), drange=training_set.dynamic_range, grid_size=grid_size)
+    
+    for i in range(len(training_set))
+        e.log_image(training_set[i])
 
     # Construct or load networks.
     with tf.device('/gpu:0'):
@@ -189,6 +211,9 @@ def training_loop(
     D_reg_opt = tflib.Optimizer(name='RegD', share=D_opt, **D_opt_args)
 
     # Build training graph for each GPU.
+    images = e.log_image(dnnlib.make_run_dir_path('fakes_init.png'), 'Initial Fakes')
+    for i in range(len(image))
+        e.log_image(images[i])
     data_fetch_ops = []
     for gpu in range(num_gpus):
         with tf.name_scope('GPU%d' % gpu), tf.device('/gpu:%d' % gpu):
@@ -230,6 +255,8 @@ def training_loop(
                 if D_reg is not None: D_reg_opt.register_gradients(tf.reduce_mean(D_reg * D_reg_interval), D_gpu.trainables)
             G_opt.register_gradients(tf.reduce_mean(G_loss), G_gpu.trainables)
             D_opt.register_gradients(tf.reduce_mean(D_loss), D_gpu.trainables)
+            
+    
 
     # Setup training ops.
     data_fetch_op = tf.group(*data_fetch_ops)
@@ -330,6 +357,7 @@ def training_loop(
                 autosummary('Resources/peak_gpu_mem_gb', peak_gpu_mem_op.eval() / 2**30)))
             autosummary('Timing/total_hours', total_time / (60.0 * 60.0))
             autosummary('Timing/total_days', total_time / (24.0 * 60.0 * 60.0))
+            e.log_dataset_hash(training_set)
 
             # Save snapshots.
             if image_snapshot_ticks is not None and (cur_tick % image_snapshot_ticks == 0 or done):
@@ -348,6 +376,7 @@ def training_loop(
 
     # Save final snapshot.
     misc.save_pkl((G, D, Gs), dnnlib.make_run_dir_path('network-final.pkl'))
+   
 
     # All done.
     summary_log.close()

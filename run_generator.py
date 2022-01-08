@@ -4,6 +4,8 @@
 # To view a copy of this license, visit
 # https://nvlabs.github.io/stylegan2/license.html
 
+%pip install comet_ml
+import comet_ml as cm
 import argparse
 import numpy as np
 import PIL.Image
@@ -124,6 +126,10 @@ Run 'python %(prog)s <subcommand> --help' for subcommand help.''',
         epilog=_examples,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    
+    e = cm.Experiment("Your API KEY")
+    # This line will used for logging images
+    e.log_image("Your Data Set Path")
 
     subparsers = parser.add_subparsers(help='Sub-commands', dest='command')
 
